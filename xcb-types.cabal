@@ -3,16 +3,23 @@ Version:      0.1.0
 Cabal-Version:  >= 1.2
 Synopsis:     Parses XML files used by the XCB project
 Description:   This package provides types which mirror the structures
-  used in the XCB project 'http://xcb.freedesktop.org/'.
-  These XML files describe the data-types, events and requests used by the
+  used in the XCB code generation XML files.
+
+  See project http://xcb.freedesktop.org/ for more information about the XCB
+  project.
+
+  The XML files describe the data-types, events and requests used by the
   X Protocol, and are used to auto-generate large parts of the XCB project.
+
+ This package parses these XML files into Haskell data structures.
+
   If you want to do something with these XML descriptions but don't want
   to learn XSLT, this package should help.
 
 License:      BSD3
 License-file: LICENSE
 Author:       Antoine Latter
-Maintainer:    Antoine Latter <aslatter@gmail.com>
+Maintainer:   Antoine Latter <aslatter@gmail.com>
 
 Build-type: Simple
 
