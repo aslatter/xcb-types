@@ -1,7 +1,8 @@
 Name:         xcb-types
 Version:      0.1.0
+Cabal-Version:  >= 1.2
 Synopsis:     Parses XML files used by the XCB project
-Decription:   This package provides types which mirror the structures
+Description:   This package provides types which mirror the structures
   used in the XCB project 'http://xcb.freedesktop.org/'.
   These XML files describe the data-types, events and requests used by the
   X Protocol, and are used to auto-generates large parts of the XCB project.
@@ -11,15 +12,17 @@ Decription:   This package provides types which mirror the structures
 License:      BSD3
 License-file: LICENSE
 Author:       Antoine Latter
-Maintaner:    Antoine Latter <aslatter@gmail.com>
+Maintainer:    Antoine Latter <aslatter@gmail.com>
 
-Library:
+Build-type: Simple
 
-Build-depends: base, xml
-Exposed-modules: XCB,
-                 XCB.Types,
-                 XCB.Pretty,
-                 XCB.FromXML
+Library
 
-Other-modules:   XCB.Utils
+ Build-depends: base, xml, pretty, mtl
+ Exposed-modules: XCB,
+                  XCB.Types,
+                  XCB.Pretty,
+                  XCB.FromXML
+
+ Other-modules:   XCB.Utils
 
