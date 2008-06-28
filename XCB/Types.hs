@@ -26,7 +26,7 @@ import Control.Monad
 -- of types, functions and haskell modules when available.
 -- |This is what a single XML file maps to.  It contains some meta-data
 -- then declarations.
-data XHeader = XHeader {xheader_header :: Name -- ^Name of module.  Used in the other modules to reference this one.
+data XHeader = XHeader {xheader_header :: Name -- ^Name of module.  Used in the other modules as a reference.
                        ,xheader_xname :: Maybe Name  -- ^Name used to indentify extensions between the X client and server.
                        ,xheader_name :: Maybe Name -- ^InterCaps name.
                        ,xheader_multiword :: Maybe Bool
@@ -63,8 +63,7 @@ type Ref = String
 
 -- |Types may include a reference to the containing module.
 data Type = UnQualType Name
-          | QualType Name -- ^Module name
-                     Name -- ^Type name
+          | QualType Name Name
  deriving Show
 
 type MaskName = Name
@@ -89,7 +88,7 @@ data Expression = Value Int  -- ^A literal value
                 | Op Binop Expression Expression -- ^A binary opeation
  deriving (Show)
 
--- ^Supported Binary operations.
+-- |Supported Binary operations.
 data Binop = Add
            | Sub
            | Mult

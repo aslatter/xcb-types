@@ -1,5 +1,5 @@
 -- |
--- Module    :  XCB.Types
+-- Module    :  XCB.FromXML
 -- Copyright :  (c) Antoine Latter 2008
 -- License   :  BSD3
 --
@@ -36,7 +36,7 @@ import Control.Applicative
 
 -- |Process the listed XML files.
 -- Any files which fail to parse are silently dropped.
--- Any declaration in an AML file which fail to parse are
+-- Any declaration in an XML file which fail to parse are
 -- silently dropped.
 fromFiles :: [FilePath] -> IO [XHeader]
 fromFiles xs = do
@@ -45,7 +45,7 @@ fromFiles xs = do
 
 -- |Process the strings as if they were XML files.
 -- Any files which fail to parse are silently dropped.
--- Any declaration in an AML file which fail to parse are
+-- Any declaration in an XML file which fail to parse are
 -- silently dropped.
 fromStrings :: [String] -> [XHeader]
 fromStrings xs =

@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 -- |
--- Module    :  XCB.Types
+-- Module    :  XCB.Pretty
 -- Copyright :  (c) Antoine Latter 2008
 -- License   :  BSD3
 --
