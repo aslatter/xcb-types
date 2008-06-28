@@ -6,8 +6,6 @@ import XCB.Types
 
 import Text.PrettyPrint.HughesPJ
 
-import Control.Monad.RW()
-
 -- |Minimal complete definition:
 --
 -- One of 'pretty' or 'toDoc'.
