@@ -1,21 +1,20 @@
-{- {-# LANGUAGE PatternSignatures, ScopedTypeVariables #-} -}
-
-{-
-
-What we need if a way to allow modules to copy events, errors, etc.
-across module boundaries.
-
-The idea is that XML parsing takes place in a Writer/Reader monad.
-
-The Reader is fed the results of the Writer.
-
-Hopefuly black-holes do not ensue.
-
--}
-
-
--- something like:
-
+-- |
+-- Module    :  XCB.Types
+-- Copyright :  (c) Antoine Latter 2008
+-- License   :  BSD3
+--
+-- Maintainer:  Antoine Latter <aslatter@gmail.com>
+-- Stability :  provisional
+-- Portability: portable
+--
+-- Handls parsing the data structures from XML files.
+--
+-- In order to support copying events and errors across module
+-- boundaries, all modules which may have cross-module event copies and
+-- error copies must be parsed at once.
+--
+-- There is no provision for preserving the event copy and error copy
+-- declarations - the copies are handled during parsing.
 module XCB.FromXML(fromFiles
                   ,fromStrings
                   ) where
@@ -35,12 +34,19 @@ import Control.Monad.Reader
 
 import Control.Applicative
 
+-- |Process the listed XML files.
+-- Any files which fail to parse are silently dropped.
+-- Any declaration in an AML file which fail to parse are
+-- silently dropped.
 fromFiles :: [FilePath] -> IO [XHeader]
 fromFiles xs = do
   strings <- sequence $ map readFile xs
   return $ fromStrings strings
 
-
+-- |Process the strings as if they were XML files.
+-- Any files which fail to parse are silently dropped.
+-- Any declaration in an AML file which fail to parse are
+-- silently dropped.
 fromStrings :: [String] -> [XHeader]
 fromStrings xs =
    let rs = mapAlt fromString xs

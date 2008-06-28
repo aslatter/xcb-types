@@ -1,9 +1,17 @@
--- |The 'XCB' package can parse the contents of the xcb-proto
+-- |
+-- Module    :  XCB
+-- Copyright :  (c) Antoine Latter 2008
+-- License   :  BSD3
+--
+-- Maintainer:  Antoine Latter <aslatter@gmail.com>
+-- Stability :  provisional
+-- Portability: portable
+--
+-- The 'XCB' package can parse the contents of the xcb-proto
 -- XML files into Haskell data structures.
 --
 -- Pretty-printers are provided to aid in the debugging - they do
 -- not pretty-print to XML, but to a custom human-readable format.
-
 module XCB
     (module XCB.Types
     ,module XCB.FromXML

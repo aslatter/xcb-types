@@ -1,5 +1,17 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
+-- |
+-- Module    :  XCB.Types
+-- Copyright :  (c) Antoine Latter 2008
+-- License   :  BSD3
+--
+-- Maintainer:  Antoine Latter <aslatter@gmail.com>
+-- Stability :  provisional
+-- Portability: portable - requires TypeSynonymInstances
+--
+-- Pretty-printers for the tyes declared in this package.
+-- This does NOT ouput XML - it produces human-readable information
+-- intended to aid in debugging.
 module XCB.Pretty where
 
 import XCB.Types

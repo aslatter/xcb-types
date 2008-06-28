@@ -1,3 +1,18 @@
+
+-- |
+-- Module    :  XCB.Types
+-- Copyright :  (c) Antoine Latter 2008
+-- License   :  BSD3
+--
+-- Maintainer:  Antoine Latter <aslatter@gmail.com>
+-- Stability :  provisional
+-- Portability: portable
+--
+-- Defines types inteneded to be equivalent to the schema used by
+-- the XCB project in their XML protocol description.
+--
+
+
 module XCB.Types where
 
 
@@ -9,16 +24,20 @@ import Control.Monad
 --
 -- 'xheader_name' is the InterCaps name, and should be prefered in the naming
 -- of types, functions and haskell modules when available.
-data XHeader = XHeader {xheader_header :: Name
-                       ,xheader_xname :: Maybe Name
-                       ,xheader_name :: Maybe Name
+-- |This is what a single XML file maps to.  It contains some meta-data
+-- then declarations.
+data XHeader = XHeader {xheader_header :: Name -- ^Name of module.  Used in the other modules to reference this one.
+                       ,xheader_xname :: Maybe Name  -- ^Name used to indentify extensions between the X client and server.
+                       ,xheader_name :: Maybe Name -- ^InterCaps name.
                        ,xheader_multiword :: Maybe Bool
                        ,xheader_major_version :: Maybe Int
                        ,xheader_minor_version :: Maybe Int
-                       ,xheader_decls :: [XDecl]
+                       ,xheader_decls :: [XDecl]  -- ^Declarations contained in this module.
                        }
  deriving (Show)
 
+-- |The different types of declarations which can be made in one of the
+-- XML files.
 data XDecl = XStruct  Name [StructElem]
            | XTypeDef Name Type
            | XEvent Name Int [StructElem]
@@ -39,9 +58,14 @@ data StructElem = Pad Int
  deriving (Show)
 
 type Name = String
-data Type = UnQualType Name | QualType Name Name deriving Show
 type XReply = [StructElem]
 type Ref = String
+
+-- |Types may include a reference to the containing module.
+data Type = UnQualType Name
+          | QualType Name -- ^Module name
+                     Name -- ^Type name
+ deriving Show
 
 type MaskName = Name
 type ListName = Name
@@ -58,12 +82,14 @@ data XidUnionElem = XidUnionElem Type
 data EnumElem = EnumElem Name (Maybe Expression)
  deriving (Show)
 
-data Expression = Value Int
-                | Bit Int
-                | FieldRef String
-                | Op Binop Expression Expression
+-- |Declarations may contain expressions from this small language
+data Expression = Value Int  -- ^A literal value
+                | Bit Int    -- ^A log-base-2 literal value
+                | FieldRef String -- ^A reference to a field in the same declaration
+                | Op Binop Expression Expression -- ^A binary opeation
  deriving (Show)
 
+-- ^Supported Binary operations.
 data Binop = Add
            | Sub
            | Mult
