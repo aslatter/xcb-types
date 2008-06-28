@@ -1,7 +1,7 @@
 {-# LANGUAGE TypeSynonymInstances #-}
 
 -- |
--- Module    :  XCB.Pretty
+-- Module    :  Data.XCB.Pretty
 -- Copyright :  (c) Antoine Latter 2008
 -- License   :  BSD3
 --
@@ -12,9 +12,9 @@
 -- Pretty-printers for the tyes declared in this package.
 -- This does NOT ouput XML - it produces human-readable information
 -- intended to aid in debugging.
-module XCB.Pretty where
+module Data.XCB.Pretty where
 
-import XCB.Types
+import Data.XCB.Types
 
 import Text.PrettyPrint.HughesPJ
 

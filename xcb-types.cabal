@@ -5,8 +5,8 @@ Synopsis:     Parses XML files used by the XCB project
 Description:   This package provides types which mirror the structures
   used in the XCB project 'http://xcb.freedesktop.org/'.
   These XML files describe the data-types, events and requests used by the
-  X Protocol, and are used to auto-generates large parts of the XCB project.
-  If you want to do something with these XML descriptions, but don't want
+  X Protocol, and are used to auto-generate large parts of the XCB project.
+  If you want to do something with these XML descriptions but don't want
   to learn XSLT, this package should help.
 
 License:      BSD3
@@ -16,13 +16,15 @@ Maintainer:    Antoine Latter <aslatter@gmail.com>
 
 Build-type: Simple
 
+Category: Data
+
 Library
 
  Build-depends: base, xml, pretty, mtl
- Exposed-modules: XCB,
-                  XCB.Types,
-                  XCB.Pretty,
-                  XCB.FromXML
+ Exposed-modules: Data.XCB,
+                  Data.XCB.Types,
+                  Data.XCB.Pretty,
+                  Data.XCB.FromXML
 
- Other-modules:   XCB.Utils
+ Other-modules:   Data.XCB.Utils
 

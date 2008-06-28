@@ -1,4 +1,4 @@
-module XCB.Utils where
+module Data.XCB.Utils where
 
 -- random utility functions
 

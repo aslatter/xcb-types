@@ -1,5 +1,5 @@
 -- |
--- Module    :  XCB.FromXML
+-- Module    :  Data.XCB.FromXML
 -- Copyright :  (c) Antoine Latter 2008
 -- License   :  BSD3
 --
@@ -15,13 +15,13 @@
 --
 -- There is no provision for preserving the event copy and error copy
 -- declarations - the copies are handled during parsing.
-module XCB.FromXML(fromFiles
-                  ,fromStrings
-                  ) where
+module Data.XCB.FromXML(fromFiles
+                       ,fromStrings
+                       ) where
 
-import XCB.Types
-import XCB.Pretty
-import XCB.Utils
+import Data.XCB.Types
+import Data.XCB.Pretty
+import Data.XCB.Utils
 
 import Text.XML.Light
 
@@ -389,7 +389,9 @@ readM = liftM fst . listToM . reads
 maybeRead :: Read a => String -> Maybe a
 maybeRead = readM
 
--- weee!
+-- In retorspect maybe I should've gone with MonadPlus, but the
+-- code is already written so I guess I need these instances.
+
 instance (Alternative f, Monad f) => Alternative (ReaderT r f) where
     empty = ReaderT $ \r -> empty
     m1 <|> m2 = ReaderT $ \r -> (runReaderT m1 r) <|> (runReaderT m2 r)

@@ -1,6 +1,6 @@
 
 -- |
--- Module    :  XCB.Types
+-- Module    :  Data.XCB.Types
 -- Copyright :  (c) Antoine Latter 2008
 -- License   :  BSD3
 --
@@ -13,7 +13,7 @@
 --
 
 
-module XCB.Types where
+module Data.XCB.Types where
 
 
 import qualified Data.List as L
