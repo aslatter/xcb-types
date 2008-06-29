@@ -60,19 +60,14 @@ data StructElem = Pad Int
 type Name = String
 type XReply = [StructElem]
 type Ref = String
+type MaskName = Name
+type ListName = Name
+
 
 -- |Types may include a reference to the containing module.
 data Type = UnQualType Name
           | QualType Name Name
  deriving Show
-
-type MaskName = Name
-type ListName = Name
-
-data ExInfo = ExInfo Name Name Version
- deriving (Show)
-
-type Version = (String,String)
 
 data XidUnionElem = XidUnionElem Type
  deriving (Show)
