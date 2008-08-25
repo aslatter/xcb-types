@@ -40,7 +40,7 @@ data XHeader = XHeader {xheader_header :: Name -- ^Name of module.  Used in the 
 -- XML files.
 data XDecl = XStruct  Name [StructElem]
            | XTypeDef Name Type
-           | XEvent Name Int [StructElem]
+           | XEvent Name Int [StructElem] (Maybe Bool)  -- ^ The boolean indicates if the event includes a sequence number.
            | XRequest Name Int [StructElem] (Maybe XReply)
            | XidType  Name
            | XidUnion  Name [XidUnionElem]

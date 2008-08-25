@@ -103,7 +103,11 @@ instance Pretty XDecl where
                                     ,text "as"
                                     ,toDoc typ
                                     ]
-    toDoc (XEvent nm n elems) =
+    toDoc (XEvent nm n elems (Just True)) =
+        hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+>
+             parens (text "No sequence number")) 2 $
+             vcat $ map toDoc elems
+    toDoc (XEvent nm n elems _) =
         hang (text "Event:" <+> text nm <> char ',' <> toDoc n) 2 $
              vcat $ map toDoc elems
     toDoc (XRequest nm n elems mrep) = 

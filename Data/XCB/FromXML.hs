@@ -108,11 +108,12 @@ findEvent :: Name -> [XDecl] -> Maybe EventDetails
 findEvent pname xs = 
       case List.find f xs of
         Nothing -> Nothing
-        Just (XEvent name code elems) -> Just $ EventDetails name code elems
-   where f (XEvent name _ _) | name == pname = True
+        Just (XEvent name code elems noseq) ->
+            Just $ EventDetails name code elems noseq
+   where f (XEvent name _ _ _) | name == pname = True
          f _ = False 
 
-data EventDetails = EventDetails Name Int [StructElem]
+data EventDetails = EventDetails Name Int [StructElem] (Maybe Bool)
 data ErrorDetails = ErrorDetails Name Int [StructElem]
 
 ---
@@ -197,9 +198,10 @@ xevent :: Element -> Parse XDecl
 xevent elem = do
   name <- elem `attr` "name"
   number <- elem `attr` "number" >>= readM
+  let noseq = ensureUpper `liftM` (elem `attr` "no-sequence-number") >>= readM
   fields <- mapAlt structField $ elChildren elem
   guard $ not $ null fields
-  return $ XEvent name number fields
+  return $ XEvent name number fields noseq
 
 xevcopy :: Element -> Parse XDecl
 xevcopy elem = do
@@ -208,10 +210,13 @@ xevcopy elem = do
   ref <- elem `attr` "ref"
   -- do we have a qualified ref?
   let (mname,evname) = splitRef ref
-  details <- lookupEvent mname evname 
-  return $ XEvent name number $ case details of
-               Nothing -> error $ "Unresolved event: " ++ show mname ++ " " ++ ref
-               Just (EventDetails _ _ x) -> x
+  details <- lookupEvent mname evname
+  return $ let EventDetails _ _ fields noseq =
+                 case details of
+                   Nothing ->
+                       error $ "Unresolved event: " ++ show mname ++ " " ++ ref
+                   Just x -> x  
+           in XEvent name number fields noseq
 
 -- we need to do string processing to distinguish qualified from
 -- unqualified types.
