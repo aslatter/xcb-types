@@ -18,6 +18,8 @@ import Data.XCB.Types
 
 import Text.PrettyPrint.HughesPJ
 
+import Data.Maybe
+
 -- |Minimal complete definition:
 --
 -- One of 'pretty' or 'toDoc'.
@@ -87,13 +89,23 @@ instance Pretty StructElem where
     toDoc (ExprField nm typ expr)
           = parens (text nm <+> text "::" <+> toDoc typ)
             <+> toDoc expr
-    toDoc (ValueParam typ mname lname)
+    toDoc (ValueParam typ mname mpad lname)
         = text "Valueparam" <+>
           text "::" <+>
-          hsep (punctuate (char ',') [toDoc typ
-                                     ,text mname
-                                     ,text lname
-                                     ])
+          hsep (punctuate (char ',') details)
+
+        where details
+                  | isJust mpad =
+                      [toDoc typ
+                      ,text mname
+                      ,toDoc mpad
+                      ,text lname
+                      ]
+                  | otherwise =
+                      [toDoc typ
+                      ,text mname
+                      ,text lname
+                      ]
 
 instance Pretty XDecl where
     toDoc (XStruct nm elems) =

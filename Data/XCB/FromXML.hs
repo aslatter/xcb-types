@@ -319,8 +319,9 @@ structField elem
     | elem `named` "valueparam" = do
         mask_typ <- liftM mkType $ elem `attr` "value-mask-type"
         mask_name <- elem `attr` "value-mask-name"
+        let mask_pad = elem `attr` "value-mask-pad" >>= readM
         list_name <- elem `attr` "value-list-name"
-        return $ ValueParam mask_typ mask_name list_name
+        return $ ValueParam mask_typ mask_name mask_pad list_name
 
     | elem `named` "exprfield" = do
         typ <- liftM mkType $ elem `attr` "type"

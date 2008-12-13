@@ -54,7 +54,7 @@ data StructElem = Pad Int
                 | List Name Type (Maybe Expression)
                 | SField Name Type
                 | ExprField Name Type Expression
-                | ValueParam Type MaskName ListName
+                | ValueParam Type MaskName (Maybe MaskPadding) ListName
  deriving (Show)
 
 type Name = String
@@ -62,7 +62,7 @@ type XReply = [StructElem]
 type Ref = String
 type MaskName = Name
 type ListName = Name
-
+type MaskPadding = Int
 
 -- |Types may include a reference to the containing module.
 data Type = UnQualType Name
