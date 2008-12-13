@@ -97,8 +97,8 @@ instance Pretty StructElem where
         where details
                   | isJust mpad =
                       [toDoc typ
+                      ,text "mask padding:" <+> toDoc mpad
                       ,text mname
-                      ,toDoc mpad
                       ,text lname
                       ]
                   | otherwise =
