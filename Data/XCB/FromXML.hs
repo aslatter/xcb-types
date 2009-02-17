@@ -303,8 +303,10 @@ structField :: MonadPlus m => Element -> m StructElem
 structField elem
     | elem `named` "field" = do
         typ <- liftM mkType $ elem `attr` "type"
+        let enum = liftM mkType $ elem `attr` "enum"
+        let mask = liftM mkType $ elem `attr` "mask"
         name <- elem `attr` "name"
-        return $ SField name typ
+        return $ SField name typ enum mask
 
     | elem `named` "pad" = do
         bytes <- elem `attr` "bytes" >>= readM
@@ -313,8 +315,9 @@ structField elem
     | elem `named` "list" = do
         typ <- liftM mkType $ elem `attr` "type"
         name <- elem `attr` "name"
+        let enum = liftM mkType $ elem `attr` "enum"
         let expr = firstChild elem >>= expression
-        return $ List name typ expr
+        return $ List name typ expr enum
 
     | elem `named` "valueparam" = do
         mask_typ <- liftM mkType $ elem `attr` "value-mask-type"

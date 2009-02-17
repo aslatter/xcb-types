@@ -80,12 +80,14 @@ instance Pretty Expression where
 
 instance Pretty StructElem where
     toDoc (Pad n) = braces $ toDoc n <+> text "bytes"
-    toDoc (List nm typ len)
-        = text nm <+> text "::" <+> brackets (toDoc typ) <+> toDoc len
-    toDoc (SField nm typ) = hsep [text nm
-                                 ,text "::"
-                                 ,toDoc typ
-                                 ]
+    toDoc (List nm typ len enums)
+        = text nm <+> text "::" <+> brackets (toDoc typ <+> toDoc enums) <+> toDoc len
+    toDoc (SField nm typ enums mask) = hsep [text nm
+                                            ,text "::"
+                                            ,toDoc typ
+                                            ,toDoc enums
+                                            ,toDoc mask
+                                            ]
     toDoc (ExprField nm typ expr)
           = parens (text nm <+> text "::" <+> toDoc typ)
             <+> toDoc expr

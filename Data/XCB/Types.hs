@@ -51,11 +51,15 @@ data XDecl = XStruct  Name [StructElem]
  deriving (Show)
 
 data StructElem = Pad Int
-                | List Name Type (Maybe Expression)
-                | SField Name Type
+                | List Name Type (Maybe Expression) (Maybe EnumVals)
+                | SField Name Type (Maybe EnumVals) (Maybe MaskVals)
                 | ExprField Name Type Expression
                 | ValueParam Type MaskName (Maybe MaskPadding) ListName
  deriving (Show)
+
+type AltEnumVals = Type
+type EnumVals = Type
+type MaskVals = Type
 
 type Name = String
 type XReply = [StructElem]
