@@ -1,4 +1,6 @@
-{-# LANGUAGE DeriveDataTypeable #-}
+{-# LANGUAGE
+     RecordWildCards
+     #-}
 
 -- |
 -- Module    :  Data.XCB.Types
@@ -20,9 +22,6 @@ module Data.XCB.Types where
 import qualified Data.List as L
 import Control.Monad
 
-import Data.Generics (Data) -- base 3
-import Data.Typeable
-
 -- 'xheader_header' is the name gauranteed to exist, and is used in
 -- imports and in type qualifiers.
 --
@@ -39,7 +38,18 @@ data GenXHeader typ = XHeader
     ,xheader_minor_version :: Maybe Int
     ,xheader_decls :: [GenXDecl typ]  -- ^Declarations contained in this module.
     }
- deriving (Show, Data, Typeable)
+ deriving (Show)
+
+mapTypes :: (a -> b) -> GenXHeader a -> GenXHeader b
+mapTypes f XHeader{..} =
+    XHeader
+     xheader_header
+     xheader_xname
+     xheader_name
+     xheader_multiword
+     xheader_major_version
+     xheader_minor_version
+     (map (mapDecls f) xheader_decls)
 
 type XHeader = GenXHeader Type
 type XDecl = GenXDecl Type
@@ -60,15 +70,39 @@ data GenXDecl typ
     | XUnion Name [GenStructElem typ]
     | XImport Name
     | XError Name Int [GenStructElem typ]
- deriving (Show, Data, Typeable)
+ deriving (Show)
+
+mapDecls :: (a -> b) -> GenXDecl a -> GenXDecl b
+mapDecls f = go
+ where
+   go (XStruct name elems) = XStruct name (map (mapSElem f) elems)
+   go (XTypeDef name t) = XTypeDef name (f t)
+   go (XEvent name n elems seq) = XEvent name n (map (mapSElem f) elems) seq
+   go (XRequest name n elems rep) = XRequest name n (map (mapSElem f) elems) (mapReply f rep)
+   go (XidType name) = XidType name
+   go (XEnum name elems) = XEnum name elems
+   go (XUnion name elems) = XUnion name (map (mapSElem f) elems)
+   go (XidUnion name elems) = XidUnion name (map (mapUnions f) elems)
+   go (XImport name) = XImport name
+   go (XError name n elems) = XError name n (map (mapSElem f) elems)
+
+mapReply f = liftM (map (mapSElem f))
 
 data GenStructElem typ
     = Pad Int
     | List Name typ (Maybe Expression) (Maybe (EnumVals typ))
     | SField Name typ (Maybe (EnumVals typ)) (Maybe (MaskVals typ))
     | ExprField Name typ Expression
-    | ValueParam typ MaskName (Maybe MaskPadding) ListName
- deriving (Show, Data, Typeable)
+    | ValueParam typ Name (Maybe MaskPadding) ListName
+ deriving (Show)
+
+mapSElem f = go
+ where
+   go (Pad n) = Pad n
+   go (List name typ exp enum) = List name (f typ) exp (liftM f enum)
+   go (SField name typ enum mask) = SField name (f typ) (liftM f enum) (liftM f mask)
+   go (ExprField name typ expr) = ExprField name (f typ) expr
+   go (ValueParam typ name pad lname) = ValueParam (f typ) name pad lname
 
 type AltEnumVals typ = typ
 type EnumVals typ = typ
@@ -87,18 +121,20 @@ data Type = UnQualType Name
  deriving Show
 
 data GenXidUnionElem typ = XidUnionElem typ
- deriving (Show, Data, Typeable)
+ deriving (Show)
+
+mapUnions f (XidUnionElem t) = XidUnionElem (f t)
 
 -- Should only ever have expressions of type 'Value' or 'Bit'.
 data EnumElem = EnumElem Name (Maybe Expression)
- deriving (Show, Data, Typeable)
+ deriving (Show)
 
 -- |Declarations may contain expressions from this small language
 data Expression = Value Int  -- ^A literal value
                 | Bit Int    -- ^A log-base-2 literal value
-                | FieldRef String -- ^A reference to a field in the same declaration
+                | FieldRef Name -- ^A reference to a field in the same declaration
                 | Op Binop Expression Expression -- ^A binary opeation
- deriving (Show, Data, Typeable)
+ deriving (Show)
 
 -- |Supported Binary operations.
 data Binop = Add
@@ -107,5 +143,5 @@ data Binop = Add
            | Div
            | And
            | RShift
- deriving (Show, Data, Typeable)
+ deriving (Show)
 
