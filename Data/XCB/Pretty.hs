@@ -47,8 +47,8 @@ instance Pretty a => Pretty (Maybe a) where
 
 -- Simple stuff
 
-instance Pretty XidUnionElem where
-    pretty = show
+instance Pretty a => Pretty (GenXidUnionElem a) where
+    toDoc (XidUnionElem t) = toDoc t
 
 instance Pretty Binop where
     pretty Add  = "+"
@@ -78,7 +78,7 @@ instance Pretty Expression where
                         ,toDoc exprR
                         ]
 
-instance Pretty StructElem where
+instance Pretty a => Pretty (GenStructElem a) where
     toDoc (Pad n) = braces $ toDoc n <+> text "bytes"
     toDoc (List nm typ len enums)
         = text nm <+> text "::" <+> brackets (toDoc typ <+> toDoc enums) <+> toDoc len
@@ -109,7 +109,7 @@ instance Pretty StructElem where
                       ,text lname
                       ]
 
-instance Pretty XDecl where
+instance Pretty a => Pretty (GenXDecl a) where
     toDoc (XStruct nm elems) =
         hang (text "Struct:" <+> text nm) 2 $ vcat $ map toDoc elems
     toDoc (XTypeDef nm typ) = hsep [text "TypeDef:"
@@ -144,6 +144,6 @@ instance Pretty XDecl where
     toDoc (XError nm n elems) = 
         hang (text "Error:" <+> text nm) 2 $ vcat $ map toDoc elems
 
-instance Pretty XHeader where
+instance Pretty a => Pretty (GenXHeader a) where
     toDoc xhd = text (xheader_header xhd) $$
                 (vcat $ map toDoc (xheader_decls xhd))
