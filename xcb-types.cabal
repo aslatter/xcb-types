@@ -30,7 +30,7 @@ Category: Data
 
 Library
 
- Build-depends: base, xml, pretty, mtl < 1.2
+ Build-depends: base == 4.*, xml == 1.3.*, pretty == 1.0.*, mtl == 2.0.*
  Exposed-modules: Data.XCB,
                   Data.XCB.Types,
                   Data.XCB.Pretty,

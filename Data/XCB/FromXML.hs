@@ -397,14 +397,3 @@ readM = liftM fst . listToM . reads
 
 maybeRead :: Read a => String -> Maybe a
 maybeRead = readM
-
--- In retorspect maybe I should've gone with MonadPlus, but the
--- code is already written so I guess I need these instances.
-
-instance (Alternative f, Monad f) => Alternative (ReaderT r f) where
-    empty = ReaderT $ \r -> empty
-    m1 <|> m2 = ReaderT $ \r -> (runReaderT m1 r) <|> (runReaderT m2 r)
-
-instance (Applicative f, Monad f) => Applicative (ReaderT r f) where
-    pure a = ReaderT $ \_ -> pure a
-    mf <*> m = ReaderT $ \r -> (runReaderT mf r) <*> (runReaderT m r)
