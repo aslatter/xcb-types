@@ -20,19 +20,15 @@ module Data.XCB.FromXML(fromFiles
                        ) where
 
 import Data.XCB.Types
-import Data.XCB.Pretty
 import Data.XCB.Utils
 
 import Text.XML.Light
 
 import Data.List as List
 import Data.Maybe
-import Data.Monoid
 
 import Control.Monad
 import Control.Monad.Reader
-
-import Control.Applicative
 
 -- |Process the listed XML files.
 -- Any files which fail to parse are silently dropped.
@@ -101,6 +97,7 @@ findError pname xs =
       case List.find f xs of
         Nothing -> Nothing
         Just (XError name code elems) -> Just $ ErrorDetails name code elems
+        _ -> error "impossible: fatal error in Data.XCB.FromXML.findError"
     where  f (XError name _ _) | name == pname = True
            f _ = False 
                                        
@@ -110,6 +107,7 @@ findEvent pname xs =
         Nothing -> Nothing
         Just (XEvent name code elems noseq) ->
             Just $ EventDetails name code elems noseq
+        _ -> error "impossible: fatal error in Data.XCB.FromXML.findEvent"
    where f (XEvent name _ _ _) | name == pname = True
          f _ = False 
 
@@ -121,7 +119,7 @@ data ErrorDetails = ErrorDetails Name Int [StructElem]
 -- extract a single XHeader from a single XML document
 fromString :: String -> ReaderT [XHeader] Maybe XHeader
 fromString str = do
-  el@(Element qname ats cnt _) <- lift $ parseXMLDoc str
+  el@(Element _qname _ats cnt _) <- lift $ parseXMLDoc str
   guard $ el `named` "xcb"
   header <- el `attr` "header"
   let name = el `attr` "extension-name"
@@ -145,19 +143,19 @@ extractDecls = mapAlt declFromElem . onlyElems
 
 -- attempt to extract a module declaration from an XML element
 declFromElem :: Element -> Parse XDecl
-declFromElem elem 
-    | elem `named` "request" = xrequest elem
-    | elem `named` "event"   = xevent elem
-    | elem `named` "eventcopy" = xevcopy elem
-    | elem `named` "error" = xerror elem
-    | elem `named` "errorcopy" = xercopy elem
-    | elem `named` "struct" = xstruct elem
-    | elem `named` "union" = xunion elem
-    | elem `named` "xidtype" = xidtype elem
-    | elem `named` "xidunion" = xidunion elem
-    | elem `named` "typedef" = xtypedef elem
-    | elem `named` "enum" = xenum elem
-    | elem `named` "import" = ximport elem
+declFromElem el
+    | el `named` "request" = xrequest el
+    | el `named` "event"   = xevent el
+    | el `named` "eventcopy" = xevcopy el
+    | el `named` "error" = xerror el
+    | el `named` "errorcopy" = xercopy el
+    | el `named` "struct" = xstruct el
+    | el `named` "union" = xunion el
+    | el `named` "xidtype" = xidtype el
+    | el `named` "xidunion" = xidunion el
+    | el `named` "typedef" = xtypedef el
+    | el `named` "enum" = xenum el
+    | el `named` "import" = ximport el
     | otherwise = mzero
 
 
@@ -165,49 +163,49 @@ ximport :: Element -> Parse XDecl
 ximport = return . XImport . strContent
 
 xenum :: Element -> Parse XDecl
-xenum elem = do
-  nm <- elem `attr` "name"
-  fields <- mapAlt enumField $ elChildren elem
+xenum el = do
+  nm <- el `attr` "name"
+  fields <- mapAlt enumField $ elChildren el
   guard $ not $ null fields
   return $ XEnum nm fields
 
 enumField :: Element -> Parse EnumElem
-enumField elem = do
-  guard $ elem `named` "item"
-  name <- elem `attr` "name"
-  let expr = firstChild elem >>= expression
+enumField el = do
+  guard $ el `named` "item"
+  name <- el `attr` "name"
+  let expr = firstChild el >>= expression
   return $ EnumElem name expr
 
 xrequest :: Element -> Parse XDecl
-xrequest elem = do
-  nm <- elem `attr` "name"
-  code <- elem `attr` "opcode" >>= readM
-  fields <- mapAlt structField $ elChildren elem
-  let reply = getReply elem
+xrequest el = do
+  nm <- el `attr` "name"
+  code <- el `attr` "opcode" >>= readM
+  fields <- mapAlt structField $ elChildren el
+  let reply = getReply el
   guard $ not (null fields) || not (isNothing reply)
   return $ XRequest nm code fields reply
 
 getReply :: Element -> Maybe XReply
-getReply elem = do
-  childElem <- unqual "reply" `findChild` elem
+getReply el = do
+  childElem <- unqual "reply" `findChild` el
   let fields = mapMaybe structField $ elChildren childElem
   guard $ not $ null fields
   return fields
 
 xevent :: Element -> Parse XDecl
-xevent elem = do
-  name <- elem `attr` "name"
-  number <- elem `attr` "number" >>= readM
-  let noseq = ensureUpper `liftM` (elem `attr` "no-sequence-number") >>= readM
-  fields <- mapAlt structField $ elChildren elem
+xevent el = do
+  name <- el `attr` "name"
+  number <- el `attr` "number" >>= readM
+  let noseq = ensureUpper `liftM` (el `attr` "no-sequence-number") >>= readM
+  fields <- mapAlt structField $ elChildren el
   guard $ not $ null fields
   return $ XEvent name number fields noseq
 
 xevcopy :: Element -> Parse XDecl
-xevcopy elem = do
-  name <- elem `attr` "name"
-  number <- elem `attr` "number" >>= readM
-  ref <- elem `attr` "ref"
+xevcopy el = do
+  name <- el `attr` "name"
+  number <- el `attr` "number" >>= readM
+  ref <- el `attr` "ref"
   -- do we have a qualified ref?
   let (mname,evname) = splitRef ref
   details <- lookupEvent mname evname
@@ -224,7 +222,7 @@ mkType :: String -> Type
 mkType str =
     let (mname, name) = splitRef str
     in case mname of
-         Just mod -> QualType mod name
+         Just modifier -> QualType modifier name
          Nothing  -> UnQualType name
 
 splitRef :: Name -> (Maybe Name, Name)
@@ -235,7 +233,7 @@ splitRef ref = case split ':' ref of
 -- |Neither returned string contains the first occurance of the
 -- supplied Char.
 split :: Char -> String -> (String, String)
-split c xs = go xs
+split c = go
     where go [] = ([],[])
           go (x:xs) | x == c = ([],xs)
                     | otherwise = 
@@ -244,19 +242,19 @@ split c xs = go xs
                  
 
 xerror :: Element -> Parse XDecl
-xerror elem = do
-  name <- elem `attr` "name"
-  number <- elem `attr` "number" >>= readM
-  fields <- mapAlt structField $ elChildren elem
+xerror el = do
+  name <- el `attr` "name"
+  number <- el `attr` "number" >>= readM
+  fields <- mapAlt structField $ elChildren el
   guard $ not $ null fields
   return $ XError name number fields
 
 
 xercopy :: Element -> Parse XDecl
-xercopy elem = do
-  name <- elem `attr` "name"
-  number <- elem `attr` "number" >>= readM
-  ref <- elem `attr` "ref"
+xercopy el = do
+  name <- el `attr` "name"
+  number <- el `attr` "number" >>= readM
+  ref <- el `attr` "ref"
   let (mname, ername) = splitRef ref
   details <- lookupError mname ername
   return $ XError name number $ case details of
@@ -264,94 +262,96 @@ xercopy elem = do
                Just (ErrorDetails _ _ x) -> x
 
 xstruct :: Element -> Parse XDecl
-xstruct elem = do
-  name <- elem `attr` "name"
-  fields <- mapAlt structField $ elChildren elem
+xstruct el = do
+  name <- el `attr` "name"
+  fields <- mapAlt structField $ elChildren el
   guard $ not $ null fields
   return $ XStruct name fields
 
 xunion :: Element -> Parse XDecl
-xunion elem = do
-  name <- elem `attr` "name"
-  fields <- mapAlt structField $ elChildren elem
+xunion el = do
+  name <- el `attr` "name"
+  fields <- mapAlt structField $ elChildren el
   guard $ not $ null fields
   return $ XUnion name fields
 
 xidtype :: Element -> Parse XDecl
-xidtype elem = liftM XidType $ elem `attr` "name"
+xidtype el = liftM XidType $ el `attr` "name"
 
 xidunion :: Element -> Parse XDecl
-xidunion elem = do
-  name <- elem `attr` "name"
-  let types = mapMaybe xidUnionElem $ elChildren elem
+xidunion el = do
+  name <- el `attr` "name"
+  let types = mapMaybe xidUnionElem $ elChildren el
   guard $ not $ null types
   return $ XidUnion name types
 
 xidUnionElem :: Element -> Maybe XidUnionElem
-xidUnionElem elem = do
-  guard $ elem `named` "type"
-  return $ XidUnionElem $ mkType $ strContent elem
+xidUnionElem el = do
+  guard $ el `named` "type"
+  return $ XidUnionElem $ mkType $ strContent el
 
 xtypedef :: Element -> Parse XDecl
-xtypedef elem = do
-  oldtyp <- liftM mkType $ elem `attr` "oldname"
-  newname <- elem `attr` "newname"
+xtypedef el = do
+  oldtyp <- liftM mkType $ el `attr` "oldname"
+  newname <- el `attr` "newname"
   return $ XTypeDef newname oldtyp
 
 
 structField :: MonadPlus m => Element -> m StructElem
-structField elem
-    | elem `named` "field" = do
-        typ <- liftM mkType $ elem `attr` "type"
-        let enum = liftM mkType $ elem `attr` "enum"
-        let mask = liftM mkType $ elem `attr` "mask"
-        name <- elem `attr` "name"
+structField el
+    | el `named` "field" = do
+        typ <- liftM mkType $ el `attr` "type"
+        let enum = liftM mkType $ el `attr` "enum"
+        let mask = liftM mkType $ el `attr` "mask"
+        name <- el `attr` "name"
         return $ SField name typ enum mask
 
-    | elem `named` "pad" = do
-        bytes <- elem `attr` "bytes" >>= readM
+    | el `named` "pad" = do
+        bytes <- el `attr` "bytes" >>= readM
         return $ Pad bytes
 
-    | elem `named` "list" = do
-        typ <- liftM mkType $ elem `attr` "type"
-        name <- elem `attr` "name"
-        let enum = liftM mkType $ elem `attr` "enum"
-        let expr = firstChild elem >>= expression
+    | el `named` "list" = do
+        typ <- liftM mkType $ el `attr` "type"
+        name <- el `attr` "name"
+        let enum = liftM mkType $ el `attr` "enum"
+        let expr = firstChild el >>= expression
         return $ List name typ expr enum
 
-    | elem `named` "valueparam" = do
-        mask_typ <- liftM mkType $ elem `attr` "value-mask-type"
-        mask_name <- elem `attr` "value-mask-name"
-        let mask_pad = elem `attr` "value-mask-pad" >>= readM
-        list_name <- elem `attr` "value-list-name"
+    | el `named` "valueparam" = do
+        mask_typ <- liftM mkType $ el `attr` "value-mask-type"
+        mask_name <- el `attr` "value-mask-name"
+        let mask_pad = el `attr` "value-mask-pad" >>= readM
+        list_name <- el `attr` "value-list-name"
         return $ ValueParam mask_typ mask_name mask_pad list_name
 
-    | elem `named` "exprfield" = do
-        typ <- liftM mkType $ elem `attr` "type"
-        name <- elem `attr` "name"
-        expr <- firstChild elem >>= expression
+    | el `named` "exprfield" = do
+        typ <- liftM mkType $ el `attr` "type"
+        name <- el `attr` "name"
+        expr <- firstChild el >>= expression
         return $ ExprField name typ expr
 
-    | elem `named` "reply" = fail "" -- handled separate
+    | el `named` "reply" = fail "" -- handled separate
 
-    | otherwise = let name = elName elem
+    | otherwise = let name = elName el
                   in error $ "I don't know what to do with structelem "
  ++ show name
 
 expression :: MonadPlus m => Element -> m Expression
-expression elem | elem `named` "fieldref"
-                    = return $ FieldRef $ strContent elem
-                | elem `named` "value"
-                    = Value `liftM` readM (strContent elem)
-                | elem `named` "bit"
+expression el | el `named` "fieldref"
+                    = return $ FieldRef $ strContent el
+              | el `named` "value"
+                    = Value `liftM` readM (strContent el)
+              | el `named` "bit"
                     = Bit `liftM` do
-                        n <- readM (strContent elem)
+                        n <- readM (strContent el)
                         guard $ n >= 0
                         return n
-                | elem `named` "op" = do
-                    binop <- elem `attr` "op" >>= toBinop
-                    [exprLhs,exprRhs] <- mapM expression $ elChildren elem
+              | el `named` "op" = do
+                    binop <- el `attr` "op" >>= toBinop
+                    [exprLhs,exprRhs] <- mapM expression $ elChildren el
                     return $ Op binop exprLhs exprRhs
+              | otherwise = do
+                    error "Unknown epression name in Data.XCB.FromXML.expression"
 
 
 toBinop :: MonadPlus m => String -> m Binop
@@ -378,7 +378,7 @@ firstChild = listToM . elChildren
 
 listToM :: MonadPlus m => [a] -> m a
 listToM [] = mzero
-listToM (x:xs) = return x
+listToM (x:_) = return x
 
 named :: Element -> String -> Bool
 named (Element qname _ _ _) name | qname == unqual name = True
@@ -395,5 +395,3 @@ attr :: MonadPlus m => Element -> String -> m String
 readM :: (MonadPlus m, Read a) => String -> m a
 readM = liftM fst . listToM . reads
 
-maybeRead :: Read a => String -> Maybe a
-maybeRead = readM

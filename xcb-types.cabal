@@ -38,3 +38,4 @@ Library
 
  Other-modules:   Data.XCB.Utils
 
+ Ghc-Options:     -Wall

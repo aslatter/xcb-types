@@ -64,7 +64,8 @@ instance Pretty EnumElem where
 
 instance Pretty Type where
     toDoc (UnQualType name) = text name
-    toDoc (QualType mod name) = text mod <> char '.' <> text name
+    toDoc (QualType modifier name)
+        = text modifier <> char '.' <> text name
 
 -- More complex stuff
 
@@ -141,7 +142,7 @@ instance Pretty a => Pretty (GenXDecl a) where
     toDoc (XUnion nm elems) = 
         hang (text "Union:" <+> text nm) 2 $ vcat $ map toDoc elems
     toDoc (XImport nm) = text "Import:" <+> text nm
-    toDoc (XError nm n elems) = 
+    toDoc (XError nm _n elems) =
         hang (text "Error:" <+> text nm) 2 $ vcat $ map toDoc elems
 
 instance Pretty a => Pretty (GenXHeader a) where

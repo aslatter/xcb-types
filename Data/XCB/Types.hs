@@ -19,7 +19,6 @@
 module Data.XCB.Types where
 
 
-import qualified Data.List as L
 import Control.Monad
 
 -- 'xheader_header' is the name gauranteed to exist, and is used in
@@ -77,7 +76,8 @@ mapDecls f = go
  where
    go (XStruct name elems) = XStruct name (map (mapSElem f) elems)
    go (XTypeDef name t) = XTypeDef name (f t)
-   go (XEvent name n elems seq) = XEvent name n (map (mapSElem f) elems) seq
+   go (XEvent name n elems seqNum)
+       = XEvent name n (map (mapSElem f) elems) seqNum
    go (XRequest name n elems rep) = XRequest name n (map (mapSElem f) elems) (mapReply f rep)
    go (XidType name) = XidType name
    go (XEnum name elems) = XEnum name elems
@@ -86,7 +86,9 @@ mapDecls f = go
    go (XImport name) = XImport name
    go (XError name n elems) = XError name n (map (mapSElem f) elems)
 
-mapReply f = liftM (map (mapSElem f))
+mapReply :: Functor f =>
+            (typ -> typ') -> f [GenStructElem typ] -> f [GenStructElem typ']
+mapReply f = fmap (map (mapSElem f))
 
 data GenStructElem typ
     = Pad Int
@@ -96,10 +98,11 @@ data GenStructElem typ
     | ValueParam typ Name (Maybe MaskPadding) ListName
  deriving (Show)
 
+mapSElem :: (typ -> typ') -> GenStructElem typ -> GenStructElem typ'
 mapSElem f = go
  where
    go (Pad n) = Pad n
-   go (List name typ exp enum) = List name (f typ) exp (liftM f enum)
+   go (List name typ expr enum) = List name (f typ) expr (liftM f enum)
    go (SField name typ enum mask) = SField name (f typ) (liftM f enum) (liftM f mask)
    go (ExprField name typ expr) = ExprField name (f typ) expr
    go (ValueParam typ name pad lname) = ValueParam (f typ) name pad lname
@@ -123,6 +126,7 @@ data Type = UnQualType Name
 data GenXidUnionElem typ = XidUnionElem typ
  deriving (Show)
 
+mapUnions :: (typ -> typ') -> GenXidUnionElem typ -> GenXidUnionElem typ'
 mapUnions f (XidUnionElem t) = XidUnionElem (f t)
 
 -- Should only ever have expressions of type 'Value' or 'Bit'.
