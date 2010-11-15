@@ -16,7 +16,29 @@
 --
 
 
-module Data.XCB.Types where
+module Data.XCB.Types
+    ( XHeader
+    , XDecl
+    , StructElem
+    , XidUnionElem
+    , XReply
+    , GenXHeader ( .. )
+    , GenXDecl ( .. )
+    , GenStructElem ( .. )
+    , GenXReply
+    , GenXidUnionElem ( .. )
+    , EnumElem ( .. )
+    , Expression ( .. )
+    , Binop ( .. )
+    , Type ( .. )
+    , EnumVals
+    , MaskVals
+    , Name
+    , Ref
+    , MaskName
+    , ListName
+    , MaskPadding
+    ) where
 
 
 import Control.Monad
@@ -38,6 +60,9 @@ data GenXHeader typ = XHeader
     ,xheader_decls :: [GenXDecl typ]  -- ^Declarations contained in this module.
     }
  deriving (Show)
+
+instance Functor GenXHeader where
+    fmap = mapTypes
 
 mapTypes :: (a -> b) -> GenXHeader a -> GenXHeader b
 mapTypes f XHeader{..} =
@@ -71,6 +96,9 @@ data GenXDecl typ
     | XError Name Int [GenStructElem typ]
  deriving (Show)
 
+instance Functor GenXDecl where
+    fmap = mapDecls
+
 mapDecls :: (a -> b) -> GenXDecl a -> GenXDecl b
 mapDecls f = go
  where
@@ -98,6 +126,9 @@ data GenStructElem typ
     | ValueParam typ Name (Maybe MaskPadding) ListName
  deriving (Show)
 
+instance Functor GenStructElem where
+    fmap = mapSElem
+
 mapSElem :: (typ -> typ') -> GenStructElem typ -> GenStructElem typ'
 mapSElem f = go
  where
@@ -107,7 +138,6 @@ mapSElem f = go
    go (ExprField name typ expr) = ExprField name (f typ) expr
    go (ValueParam typ name pad lname) = ValueParam (f typ) name pad lname
 
-type AltEnumVals typ = typ
 type EnumVals typ = typ
 type MaskVals typ = typ
 
@@ -125,6 +155,9 @@ data Type = UnQualType Name
 
 data GenXidUnionElem typ = XidUnionElem typ
  deriving (Show)
+
+instance Functor GenXidUnionElem where
+    fmap = mapUnions
 
 mapUnions :: (typ -> typ') -> GenXidUnionElem typ -> GenXidUnionElem typ'
 mapUnions f (XidUnionElem t) = XidUnionElem (f t)
