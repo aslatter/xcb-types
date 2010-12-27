@@ -1,6 +1,6 @@
 Name:         xcb-types
 Version:      0.6.0
-Cabal-Version:  >= 1.2
+Cabal-Version:  >= 1.6
 Synopsis:     Parses XML files used by the XCB project
 Description:   This package provides types which mirror the structures
   used in the XCB code generation XML files.
