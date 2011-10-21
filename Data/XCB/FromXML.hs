@@ -182,7 +182,6 @@ xrequest el = do
   code <- el `attr` "opcode" >>= readM
   fields <- mapAlt structField $ elChildren el
   let reply = getReply el
-  guard $ not (null fields) || not (isNothing reply)
   return $ XRequest nm code fields reply
 
 getReply :: Element -> Maybe XReply
