@@ -30,14 +30,22 @@ import Data.Maybe
 import Control.Monad
 import Control.Monad.Reader
 
+import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
+
 -- |Process the listed XML files.
 -- Any files which fail to parse are silently dropped.
 -- Any declaration in an XML file which fail to parse are
 -- silently dropped.
 fromFiles :: [FilePath] -> IO [XHeader]
 fromFiles xs = do
-  strings <- sequence $ map readFile xs
+  strings <- sequence $ map readFileUTF8 xs
   return $ fromStrings strings
+
+readFileUTF8 :: FilePath -> IO String
+readFileUTF8 fp = do
+  h <- openFile fp ReadMode
+  hSetEncoding h utf8
+  hGetContents h
 
 -- |Process the strings as if they were XML files.
 -- Any files which fail to parse are silently dropped.
