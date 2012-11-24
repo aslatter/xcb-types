@@ -188,14 +188,14 @@ xrequest :: Element -> Parse XDecl
 xrequest el = do
   nm <- el `attr` "name"
   code <- el `attr` "opcode" >>= readM
-  fields <- mapAlt structField $ elChildren el
+  fields <- mapM structField $ elChildren el
   let reply = getReply el
   return $ XRequest nm code fields reply
 
 getReply :: Element -> Maybe XReply
 getReply el = do
   childElem <- unqual "reply" `findChild` el
-  let fields = mapMaybe structField $ elChildren childElem
+  fields <- mapM structField $ elChildren childElem
   guard $ not $ null fields
   return fields
 
@@ -204,7 +204,7 @@ xevent el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
   let noseq = ensureUpper `liftM` (el `attr` "no-sequence-number") >>= readM
-  fields <- mapAlt structField $ elChildren el
+  fields <- mapM structField $ elChildren el
   guard $ not $ null fields
   return $ XEvent name number fields noseq
 
@@ -252,7 +252,7 @@ xerror :: Element -> Parse XDecl
 xerror el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
-  fields <- mapAlt structField $ elChildren el
+  fields <- mapM structField $ elChildren el
   guard $ not $ null fields
   return $ XError name number fields
 
@@ -331,6 +331,13 @@ structField el
         list_name <- el `attr` "value-list-name"
         return $ ValueParam mask_typ mask_name mask_pad list_name
 
+    | el `named` "switch" = do
+        nm <- el `attr` "name"
+        (exprEl,caseEls) <- unconsChildren el
+        expr <- expression exprEl
+        cases <- mapM bitCase caseEls
+        return $ Switch nm expr cases
+
     | el `named` "exprfield" = do
         typ <- liftM mkType $ el `attr` "type"
         name <- el `attr` "name"
@@ -343,9 +350,25 @@ structField el
                   in error $ "I don't know what to do with structelem "
  ++ show name
 
+bitCase :: MonadPlus m => Element -> m BitCase
+bitCase el | el `named` "bitcase" = do
+               let mName = el `attr` "name"
+               (exprEl, fieldEls) <- unconsChildren el
+               expr <- expression exprEl
+               fields <- mapM structField fieldEls
+               return $ BitCase mName expr fields
+           | otherwise =
+               let name = elName el
+               in error $ "Invalid bitCase: " ++ show name
+
 expression :: MonadPlus m => Element -> m Expression
 expression el | el `named` "fieldref"
                     = return $ FieldRef $ strContent el
+              | el `named` "enumref" = do
+                   enumNm <- el `attr` "ref"
+                   let enumVal = strContent el
+                   guard $ enumVal /= ""
+                   return $ EnumRef enumNm enumVal
               | el `named` "value"
                     = Value `liftM` readM (strContent el)
               | el `named` "bit"
@@ -357,8 +380,19 @@ expression el | el `named` "fieldref"
                     binop <- el `attr` "op" >>= toBinop
                     [exprLhs,exprRhs] <- mapM expression $ elChildren el
                     return $ Op binop exprLhs exprRhs
-              | otherwise = do
-                    error "Unknown epression name in Data.XCB.FromXML.expression"
+              | el `named` "unop" = do
+                    op <- el `attr` "op" >>= toUnop
+                    expr <- firstChild el >>= expression
+                    return $ Unop op expr
+              | el `named` "popcount" = do
+                    expr <- firstChild el >>= expression
+                    return $ PopCount expr
+              | el `named` "sumof" = do
+                    ref <- el `attr` "ref"
+                    return $ SumOf ref
+              | otherwise =
+                  let nm = elName el
+                  in error $ "Unknown epression " ++ show nm ++ " in Data.XCB.FromXML.expression"
 
 
 toBinop :: MonadPlus m => String -> m Binop
@@ -371,7 +405,9 @@ toBinop "&amp;" = return And
 toBinop ">>" = return RShift
 toBinop _ = mzero
 
-
+toUnop :: MonadPlus m => String -> m Unop
+toUnop "~" = return Compliment
+toUnop _ = mzero
 
 
 ----
@@ -382,6 +418,12 @@ toBinop _ = mzero
 
 firstChild :: MonadPlus m => Element -> m Element
 firstChild = listToM . elChildren
+
+unconsChildren :: MonadPlus m => Element -> m (Element, [Element])
+unconsChildren el
+    = case elChildren el of
+        (x:xs) -> return (x,xs)
+        _ -> mzero
 
 listToM :: MonadPlus m => [a] -> m a
 listToM [] = mzero

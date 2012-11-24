@@ -58,6 +58,9 @@ instance Pretty Binop where
     pretty RShift = ">>"
     pretty And = "&"
 
+instance Pretty Unop where
+    pretty Compliment = "~"
+
 instance Pretty EnumElem where
     toDoc (EnumElem name expr)
         = text name <> char ':' <+> toDoc expr
@@ -73,11 +76,19 @@ instance Pretty Expression where
     toDoc (Value n) = toDoc n
     toDoc (Bit n) = text "2^" <> toDoc n
     toDoc (FieldRef ref) = char '$' <> text ref
+    toDoc (EnumRef parent child)
+        = text parent <> char '.' <> text child
+    toDoc (PopCount expr)
+        = text "popcount" <> parens (toDoc expr)
+    toDoc (SumOf ref)
+        = text "sumof" <> (parens $ char '$' <> text ref)
     toDoc (Op binop exprL exprR)
         = parens $ hsep [toDoc exprL
                         ,toDoc binop
                         ,toDoc exprR
                         ]
+    toDoc (Unop op expr)
+        = parens $ toDoc op <> toDoc expr
 
 instance Pretty a => Pretty (GenStructElem a) where
     toDoc (Pad n) = braces $ toDoc n <+> text "bytes"
@@ -90,8 +101,13 @@ instance Pretty a => Pretty (GenStructElem a) where
                                             ,toDoc mask
                                             ]
     toDoc (ExprField nm typ expr)
-          = parens (text nm <+> text "::" <+> toDoc typ)
-            <+> toDoc expr
+        = parens (text nm <+> text "::" <+> toDoc typ)
+          <+> toDoc expr
+    toDoc (Switch name expr cases)
+        = vcat
+           [ text "switch" <> parens (toDoc expr) <> brackets (text name)
+           , braces (vcat (map toDoc cases))
+           ]
     toDoc (ValueParam typ mname mpad lname)
         = text "Valueparam" <+>
           text "::" <+>
@@ -109,6 +125,19 @@ instance Pretty a => Pretty (GenStructElem a) where
                       ,text mname
                       ,text lname
                       ]
+
+instance Pretty a => Pretty (GenBitCase a) where
+    toDoc (BitCase name expr fields)
+        = vcat
+           [ bitCaseHeader name expr
+           , braces (vcat (map toDoc fields))
+           ]
+
+bitCaseHeader :: Maybe Name -> Expression -> Doc
+bitCaseHeader Nothing expr =
+    text "bitcase" <> parens (toDoc expr)
+bitCaseHeader (Just name) expr =
+    text "bitcase" <> parens (toDoc expr) <> brackets (text name)
 
 instance Pretty a => Pretty (GenXDecl a) where
     toDoc (XStruct nm elems) =

@@ -1,5 +1,6 @@
 {-# LANGUAGE
-     RecordWildCards
+     RecordWildCards,
+     DeriveFunctor
      #-}
 
 -- |
@@ -20,16 +21,19 @@ module Data.XCB.Types
     ( XHeader
     , XDecl
     , StructElem
+    , BitCase
     , XidUnionElem
     , XReply
     , GenXHeader ( .. )
     , GenXDecl ( .. )
     , GenStructElem ( .. )
+    , GenBitCase ( .. )
     , GenXReply
     , GenXidUnionElem ( .. )
     , EnumElem ( .. )
     , Expression ( .. )
     , Binop ( .. )
+    , Unop ( .. )
     , Type ( .. )
     , EnumVals
     , MaskVals
@@ -40,8 +44,6 @@ module Data.XCB.Types
     , MaskPadding
     ) where
 
-
-import Control.Monad
 
 -- 'xheader_header' is the name gauranteed to exist, and is used in
 -- imports and in type qualifiers.
@@ -59,25 +61,12 @@ data GenXHeader typ = XHeader
     ,xheader_minor_version :: Maybe Int
     ,xheader_decls :: [GenXDecl typ]  -- ^Declarations contained in this module.
     }
- deriving (Show)
-
-instance Functor GenXHeader where
-    fmap = mapTypes
-
-mapTypes :: (a -> b) -> GenXHeader a -> GenXHeader b
-mapTypes f XHeader{..} =
-    XHeader
-     xheader_header
-     xheader_xname
-     xheader_name
-     xheader_multiword
-     xheader_major_version
-     xheader_minor_version
-     (map (mapDecls f) xheader_decls)
+ deriving (Show, Functor)
 
 type XHeader = GenXHeader Type
 type XDecl = GenXDecl Type
 type StructElem = GenStructElem Type
+type BitCase = GenBitCase Type
 type XidUnionElem = GenXidUnionElem Type
 type XReply = GenXReply Type
 
@@ -94,29 +83,7 @@ data GenXDecl typ
     | XUnion Name [GenStructElem typ]
     | XImport Name
     | XError Name Int [GenStructElem typ]
- deriving (Show)
-
-instance Functor GenXDecl where
-    fmap = mapDecls
-
-mapDecls :: (a -> b) -> GenXDecl a -> GenXDecl b
-mapDecls f = go
- where
-   go (XStruct name elems) = XStruct name (map (mapSElem f) elems)
-   go (XTypeDef name t) = XTypeDef name (f t)
-   go (XEvent name n elems seqNum)
-       = XEvent name n (map (mapSElem f) elems) seqNum
-   go (XRequest name n elems rep) = XRequest name n (map (mapSElem f) elems) (mapReply f rep)
-   go (XidType name) = XidType name
-   go (XEnum name elems) = XEnum name elems
-   go (XUnion name elems) = XUnion name (map (mapSElem f) elems)
-   go (XidUnion name elems) = XidUnion name (map (mapUnions f) elems)
-   go (XImport name) = XImport name
-   go (XError name n elems) = XError name n (map (mapSElem f) elems)
-
-mapReply :: Functor f =>
-            (typ -> typ') -> f [GenStructElem typ] -> f [GenStructElem typ']
-mapReply f = fmap (map (mapSElem f))
+ deriving (Show, Functor)
 
 data GenStructElem typ
     = Pad Int
@@ -124,19 +91,12 @@ data GenStructElem typ
     | SField Name typ (Maybe (EnumVals typ)) (Maybe (MaskVals typ))
     | ExprField Name typ Expression
     | ValueParam typ Name (Maybe MaskPadding) ListName
- deriving (Show)
+    | Switch Name Expression [GenBitCase typ]
+ deriving (Show, Functor)
 
-instance Functor GenStructElem where
-    fmap = mapSElem
-
-mapSElem :: (typ -> typ') -> GenStructElem typ -> GenStructElem typ'
-mapSElem f = go
- where
-   go (Pad n) = Pad n
-   go (List name typ expr enum) = List name (f typ) expr (liftM f enum)
-   go (SField name typ enum mask) = SField name (f typ) (liftM f enum) (liftM f mask)
-   go (ExprField name typ expr) = ExprField name (f typ) expr
-   go (ValueParam typ name pad lname) = ValueParam (f typ) name pad lname
+data GenBitCase typ
+    = BitCase (Maybe Name) Expression [GenStructElem typ]
+ deriving (Show, Functor)
 
 type EnumVals typ = typ
 type MaskVals typ = typ
@@ -154,13 +114,7 @@ data Type = UnQualType Name
  deriving Show
 
 data GenXidUnionElem typ = XidUnionElem typ
- deriving (Show)
-
-instance Functor GenXidUnionElem where
-    fmap = mapUnions
-
-mapUnions :: (typ -> typ') -> GenXidUnionElem typ -> GenXidUnionElem typ'
-mapUnions f (XidUnionElem t) = XidUnionElem (f t)
+ deriving (Show, Functor)
 
 -- Should only ever have expressions of type 'Value' or 'Bit'.
 data EnumElem = EnumElem Name (Maybe Expression)
@@ -170,7 +124,11 @@ data EnumElem = EnumElem Name (Maybe Expression)
 data Expression = Value Int  -- ^A literal value
                 | Bit Int    -- ^A log-base-2 literal value
                 | FieldRef Name -- ^A reference to a field in the same declaration
+                | EnumRef Name Name -- ^A reference to a member of an enum.
+                | PopCount Expression -- ^Calculate the number of set bits in the argument
+                | SumOf Name -- ^Note sure. The argument should be a reference to a list
                 | Op Binop Expression Expression -- ^A binary opeation
+                | Unop Unop Expression -- ^A unary operation
  deriving (Show)
 
 -- |Supported Binary operations.
@@ -182,3 +140,5 @@ data Binop = Add
            | RShift
  deriving (Show)
 
+data Unop = Compliment
+ deriving (Show)
