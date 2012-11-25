@@ -409,7 +409,7 @@ toBinop ">>" = return RShift
 toBinop _ = mzero
 
 toUnop :: MonadPlus m => String -> m Unop
-toUnop "~" = return Compliment
+toUnop "~" = return Complement
 toUnop _ = mzero
 
 

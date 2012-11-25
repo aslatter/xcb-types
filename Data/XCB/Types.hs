@@ -145,5 +145,5 @@ data Binop = Add
            | RShift
  deriving (Show)
 
-data Unop = Compliment
+data Unop = Complement
  deriving (Show)

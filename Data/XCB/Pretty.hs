@@ -59,7 +59,7 @@ instance Pretty Binop where
     pretty And = "&"
 
 instance Pretty Unop where
-    pretty Compliment = "~"
+    pretty Complement = "~"
 
 instance Pretty a => Pretty (EnumElem a) where
     toDoc (EnumElem name expr)
