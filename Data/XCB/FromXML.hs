@@ -191,7 +191,9 @@ xrequest :: Element -> Parse XDecl
 xrequest el = do
   nm <- el `attr` "name"
   code <- el `attr` "opcode" >>= readM
-  fields <- mapM structField $ elChildren el
+  -- TODO - I don't think I like 'mapAlt' here.
+  -- I don't want to be silently dropping fields
+  fields <- mapAlt structField $ elChildren el
   let reply = getReply el
   return $ XRequest nm code fields reply
 
