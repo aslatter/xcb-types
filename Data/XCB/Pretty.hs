@@ -61,7 +61,7 @@ instance Pretty Binop where
 instance Pretty Unop where
     pretty Compliment = "~"
 
-instance Pretty EnumElem where
+instance Pretty a => Pretty (EnumElem a) where
     toDoc (EnumElem name expr)
         = text name <> char ':' <+> toDoc expr
 
@@ -72,12 +72,12 @@ instance Pretty Type where
 
 -- More complex stuff
 
-instance Pretty Expression where
+instance Pretty a => Pretty (Expression a) where
     toDoc (Value n) = toDoc n
     toDoc (Bit n) = text "2^" <> toDoc n
     toDoc (FieldRef ref) = char '$' <> text ref
-    toDoc (EnumRef parent child)
-        = text parent <> char '.' <> text child
+    toDoc (EnumRef typ child)
+        = toDoc typ <> char '.' <> text child
     toDoc (PopCount expr)
         = text "popcount" <> parens (toDoc expr)
     toDoc (SumOf ref)
@@ -133,7 +133,7 @@ instance Pretty a => Pretty (GenBitCase a) where
            , braces (vcat (map toDoc fields))
            ]
 
-bitCaseHeader :: Maybe Name -> Expression -> Doc
+bitCaseHeader :: Pretty a => Maybe Name -> Expression a -> Doc
 bitCaseHeader Nothing expr =
     text "bitcase" <> parens (toDoc expr)
 bitCaseHeader (Just name) expr =

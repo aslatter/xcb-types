@@ -21,9 +21,11 @@ module Data.XCB.Types
     ( XHeader
     , XDecl
     , StructElem
+    , XEnumElem
     , BitCase
     , XidUnionElem
     , XReply
+    , XExpression
     , GenXHeader ( .. )
     , GenXDecl ( .. )
     , GenStructElem ( .. )
@@ -69,6 +71,8 @@ type StructElem = GenStructElem Type
 type BitCase = GenBitCase Type
 type XidUnionElem = GenXidUnionElem Type
 type XReply = GenXReply Type
+type XExpression = Expression Type
+type XEnumElem = EnumElem Type
 
 -- |The different types of declarations which can be made in one of the
 -- XML files.
@@ -79,7 +83,7 @@ data GenXDecl typ
     | XRequest Name Int [GenStructElem typ] (Maybe (GenXReply typ))
     | XidType  Name
     | XidUnion  Name [GenXidUnionElem typ]
-    | XEnum Name [EnumElem]
+    | XEnum Name [EnumElem typ]
     | XUnion Name [GenStructElem typ]
     | XImport Name
     | XError Name Int [GenStructElem typ]
@@ -87,15 +91,15 @@ data GenXDecl typ
 
 data GenStructElem typ
     = Pad Int
-    | List Name typ (Maybe Expression) (Maybe (EnumVals typ))
+    | List Name typ (Maybe (Expression typ)) (Maybe (EnumVals typ))
     | SField Name typ (Maybe (EnumVals typ)) (Maybe (MaskVals typ))
-    | ExprField Name typ Expression
+    | ExprField Name typ (Expression typ)
     | ValueParam typ Name (Maybe MaskPadding) ListName
-    | Switch Name Expression [GenBitCase typ]
+    | Switch Name (Expression typ) [GenBitCase typ]
  deriving (Show, Functor)
 
 data GenBitCase typ
-    = BitCase (Maybe Name) Expression [GenStructElem typ]
+    = BitCase (Maybe Name) (Expression typ) [GenStructElem typ]
  deriving (Show, Functor)
 
 type EnumVals typ = typ
@@ -117,19 +121,20 @@ data GenXidUnionElem typ = XidUnionElem typ
  deriving (Show, Functor)
 
 -- Should only ever have expressions of type 'Value' or 'Bit'.
-data EnumElem = EnumElem Name (Maybe Expression)
- deriving (Show)
+data EnumElem typ = EnumElem Name (Maybe (Expression typ))
+ deriving (Show, Functor)
 
 -- |Declarations may contain expressions from this small language
-data Expression = Value Int  -- ^A literal value
-                | Bit Int    -- ^A log-base-2 literal value
-                | FieldRef Name -- ^A reference to a field in the same declaration
-                | EnumRef Name Name -- ^A reference to a member of an enum.
-                | PopCount Expression -- ^Calculate the number of set bits in the argument
-                | SumOf Name -- ^Note sure. The argument should be a reference to a list
-                | Op Binop Expression Expression -- ^A binary opeation
-                | Unop Unop Expression -- ^A unary operation
- deriving (Show)
+data Expression typ
+    = Value Int  -- ^A literal value
+    | Bit Int    -- ^A log-base-2 literal value
+    | FieldRef Name -- ^A reference to a field in the same declaration
+    | EnumRef typ Name -- ^A reference to a member of an enum.
+    | PopCount (Expression typ) -- ^Calculate the number of set bits in the argument
+    | SumOf Name -- ^Note sure. The argument should be a reference to a list
+    | Op Binop (Expression typ) (Expression typ) -- ^A binary opeation
+    | Unop Unop (Expression typ) -- ^A unary operation
+ deriving (Show, Functor)
 
 -- |Supported Binary operations.
 data Binop = Add

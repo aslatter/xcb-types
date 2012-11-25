@@ -27,6 +27,7 @@ import Text.XML.Light
 import Data.List as List
 import Data.Maybe
 
+import Control.Applicative ((<$>))
 import Control.Monad
 import Control.Monad.Reader
 
@@ -41,6 +42,8 @@ fromFiles xs = do
   strings <- sequence $ map readFileUTF8 xs
   return $ fromStrings strings
 
+-- | Like 'readFile', but forces the encoding
+-- of the file to UTF8.
 readFileUTF8 :: FilePath -> IO String
 readFileUTF8 fp = do
   h <- openFile fp ReadMode
@@ -177,7 +180,7 @@ xenum el = do
   guard $ not $ null fields
   return $ XEnum nm fields
 
-enumField :: Element -> Parse EnumElem
+enumField :: Element -> Parse (EnumElem Type)
 enumField el = do
   guard $ el `named` "item"
   name <- el `attr` "name"
@@ -304,7 +307,7 @@ xtypedef el = do
   return $ XTypeDef newname oldtyp
 
 
-structField :: MonadPlus m => Element -> m StructElem
+structField :: (MonadPlus m, Functor m) => Element -> m StructElem
 structField el
     | el `named` "field" = do
         typ <- liftM mkType $ el `attr` "type"
@@ -350,7 +353,7 @@ structField el
                   in error $ "I don't know what to do with structelem "
  ++ show name
 
-bitCase :: MonadPlus m => Element -> m BitCase
+bitCase :: (MonadPlus m, Functor m) => Element -> m BitCase
 bitCase el | el `named` "bitcase" = do
                let mName = el `attr` "name"
                (exprEl, fieldEls) <- unconsChildren el
@@ -361,14 +364,14 @@ bitCase el | el `named` "bitcase" = do
                let name = elName el
                in error $ "Invalid bitCase: " ++ show name
 
-expression :: MonadPlus m => Element -> m Expression
+expression :: (MonadPlus m, Functor m) => Element -> m XExpression
 expression el | el `named` "fieldref"
                     = return $ FieldRef $ strContent el
               | el `named` "enumref" = do
-                   enumNm <- el `attr` "ref"
+                   enumTy <- mkType <$> el `attr` "ref"
                    let enumVal = strContent el
                    guard $ enumVal /= ""
-                   return $ EnumRef enumNm enumVal
+                   return $ EnumRef enumTy enumVal
               | el `named` "value"
                     = Value `liftM` readM (strContent el)
               | el `named` "bit"
