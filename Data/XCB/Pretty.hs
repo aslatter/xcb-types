@@ -18,6 +18,7 @@ import Data.XCB.Types
 
 import Text.PrettyPrint.HughesPJ
 
+import qualified Data.Map as Map
 import Data.Maybe
 
 -- |Minimal complete definition:
@@ -108,6 +109,23 @@ instance Pretty a => Pretty (GenStructElem a) where
            [ text "switch" <> parens (toDoc expr) <> brackets (text name)
            , braces (vcat (map toDoc cases))
            ]
+    toDoc (Doc brief fields see)
+        = text "Doc" <+>
+          text "::" <+>
+          text "brief=" <+> text brief <+> text ";" <+>
+          text "fields=" <+>
+          hsep (punctuate (char ',') $ joinWith ":" $ Map.toList fields) <+>
+          text ";" <+>
+          text "see=" <+>
+          hsep (punctuate (char ',') $ joinWith "." see)
+
+        where
+          joinWith c = map $ \(x,y) -> text $ x ++ c ++ y
+
+    toDoc (Fd fd)
+        = text "Fd" <+>
+          text "::" <+>
+          text fd
     toDoc (ValueParam typ mname mpad lname)
         = text "Valueparam" <+>
           text "::" <+>
