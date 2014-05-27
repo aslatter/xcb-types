@@ -25,6 +25,7 @@ import Data.XCB.Utils
 import Text.XML.Light
 
 import Data.List as List
+import qualified Data.Map as Map
 import Data.Maybe
 
 import Control.Applicative ((<$>))
@@ -351,6 +352,21 @@ structField el
 
     | el `named` "reply" = fail "" -- handled separate
 
+    | el `named` "doc" = do
+        brief <- liftM strContent $ el `child` "brief"
+        fields <- el `children` "field"
+        let mkField = \x -> fmap (\y -> (y, strContent x)) $ x `attr` "name"
+            fields' = Map.fromList $ catMaybes $ map mkField fields
+            sees = findChildren (unqual "see") el
+            sees' = catMaybes $ flip map sees $ \s -> do typ <- s `attr` "type"
+                                                         name <- s `attr` "name"
+                                                         return (typ, name)
+        return $ Doc brief fields' sees'
+
+    | el `named` "fd" = do
+        name <- el `attr` "name"
+        return $ Fd name
+
     | otherwise = let name = elName el
                   in error $ "I don't know what to do with structelem "
  ++ show name
@@ -444,6 +460,18 @@ attr :: MonadPlus m => Element -> String -> m String
       _ -> mzero
     where p (Attr qname _) | qname == unqual name = True
           p _ = False
+
+children :: MonadPlus m => Element -> String -> m [Element]
+(Element _ _ xs _) `children` name = case List.filter p xs of
+      [] -> mzero
+      some -> return $ onlyElems some
+    where p (Elem (Element n _ _ _)) | n == unqual name = True
+          p _ = False
+
+child :: MonadPlus m => Element -> String -> m Element
+e `child` n = case findChild (unqual n) e of
+                Just el -> return el
+                _ -> mzero
 
 -- adapted from Network.CGI.Protocol
 readM :: (MonadPlus m, Read a) => String -> m a

@@ -46,6 +46,7 @@ module Data.XCB.Types
     , MaskPadding
     ) where
 
+import Data.Map
 
 -- 'xheader_header' is the name gauranteed to exist, and is used in
 -- imports and in type qualifiers.
@@ -96,6 +97,8 @@ data GenStructElem typ
     | ExprField Name typ (Expression typ)
     | ValueParam typ Name (Maybe MaskPadding) ListName
     | Switch Name (Expression typ) [GenBitCase typ]
+    | Doc String (Map Name String) [(String, String)]
+    | Fd String
  deriving (Show, Functor)
 
 data GenBitCase typ
@@ -115,7 +118,7 @@ type MaskPadding = Int
 -- |Types may include a reference to the containing module.
 data Type = UnQualType Name
           | QualType Name Name
- deriving Show
+ deriving (Show, Eq, Ord)
 
 data GenXidUnionElem typ = XidUnionElem typ
  deriving (Show, Functor)
