@@ -1,0 +1,13 @@
+Version 0.7.0
+
+Author: Tycho Andersen <tycho@tycho.ws>
+Date:   Sat May 17 09:38:02 2014 -0500
+
+    Add support for 1.10
+
+    There are two new elements: doc and fd.
+
+Author: Antoine Latter <aslatter@gmail.com>
+Date:   Sat Nov 24 22:15:55 2012 +0000
+
+    Overhaul for proto 1.7
