@@ -30,7 +30,11 @@ Category: Data
 
 Library
 
- Build-depends: base == 4.*, xml == 1.3.*, pretty == 1.0.* || == 1.1.*, mtl == 2.0.* || == 2.1.*, containers >= 0.5
+ Build-depends: base == 4.*,
+                xml == 1.3.*,
+                pretty == 1.0.* || == 1.1.*,
+                mtl >= 2.0 && < 2.3,
+                containers >= 0.5
  Exposed-modules: Data.XCB,
                   Data.XCB.Types,
                   Data.XCB.Pretty,
