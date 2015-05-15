@@ -259,7 +259,6 @@ xerror el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
   fields <- mapM structField $ elChildren el
-  guard $ not $ null fields
   return $ XError name number fields
 
 
