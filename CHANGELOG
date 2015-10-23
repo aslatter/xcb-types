@@ -1,3 +1,16 @@
+Version 0.7.1
+
+Author: Tycho Andersen <tycho@tycho.ws>
+Date:   Thu May 14 22:30:14 2015 -0600
+
+    allow empty error structs
+
+    XCB has empty error structs [1] (and in xv, and a few other spots), so we
+    should actually render these even if they're empty.
+
+    [1]: http://cgit.freedesktop.org/xcb/proto/tree/src/render.xml#n135
+
+
 Version 0.7.0
 
 Author: Tycho Andersen <tycho@tycho.ws>
