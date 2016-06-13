@@ -73,6 +73,16 @@ localName = snd `liftM` ask
 allModules :: Parse [XHeader]
 allModules = fst `liftM` ask
 
+-- Extract an Alignment from a list of Elements. This assumes that the
+-- required_start_align is the first element if it exists at all.
+extractAlignment :: (MonadPlus m, Functor m) => [Element] -> m (Maybe Alignment, [Element])
+extractAlignment (el : xs) | el `named` "required_start_align" = do
+                               align <- el `attr` "align" >>= readM
+                               offset <- el `attr` "offset" >>= readM
+                               return (Just (Alignment align offset), xs)
+                           | otherwise = return (Nothing, el : xs)
+extractAlignment xs = return (Nothing, xs)
+
 -- a generic function for looking up something from
 -- a named XHeader.
 --
@@ -108,23 +118,23 @@ findError :: Name -> [XDecl] -> Maybe ErrorDetails
 findError pname xs =
       case List.find f xs of
         Nothing -> Nothing
-        Just (XError name code elems) -> Just $ ErrorDetails name code elems
+        Just (XError name code alignment elems) -> Just $ ErrorDetails name code alignment elems
         _ -> error "impossible: fatal error in Data.XCB.FromXML.findError"
-    where  f (XError name _ _) | name == pname = True
+    where  f (XError name _ _ _) | name == pname = True
            f _ = False 
                                        
 findEvent :: Name -> [XDecl] -> Maybe EventDetails
 findEvent pname xs = 
       case List.find f xs of
         Nothing -> Nothing
-        Just (XEvent name code elems noseq) ->
-            Just $ EventDetails name code elems noseq
+        Just (XEvent name code alignment elems noseq) ->
+            Just $ EventDetails name code alignment elems noseq
         _ -> error "impossible: fatal error in Data.XCB.FromXML.findEvent"
-   where f (XEvent name _ _ _) | name == pname = True
+   where f (XEvent name _ _ _ _) | name == pname = True
          f _ = False 
 
-data EventDetails = EventDetails Name Int [StructElem] (Maybe Bool)
-data ErrorDetails = ErrorDetails Name Int [StructElem]
+data EventDetails = EventDetails Name Int (Maybe Alignment) [StructElem] (Maybe Bool)
+data ErrorDetails = ErrorDetails Name Int (Maybe Alignment) [StructElem]
 
 ---
 
@@ -194,25 +204,28 @@ xrequest el = do
   code <- el `attr` "opcode" >>= readM
   -- TODO - I don't think I like 'mapAlt' here.
   -- I don't want to be silently dropping fields
-  fields <- mapAlt structField $ elChildren el
+  (alignment, xs) <- extractAlignment $ elChildren el
+  fields <- mapAlt structField $ xs
   let reply = getReply el
-  return $ XRequest nm code fields reply
+  return $ XRequest nm code alignment fields reply
 
 getReply :: Element -> Maybe XReply
 getReply el = do
   childElem <- unqual "reply" `findChild` el
-  fields <- mapM structField $ elChildren childElem
+  (alignment, xs) <- extractAlignment $ elChildren childElem
+  fields <- mapM structField xs
   guard $ not $ null fields
-  return fields
+  return $ GenXReply alignment fields
 
 xevent :: Element -> Parse XDecl
 xevent el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
   let noseq = ensureUpper `liftM` (el `attr` "no-sequence-number") >>= readM
-  fields <- mapM structField $ elChildren el
+  (alignment, xs) <- extractAlignment (elChildren el)
+  fields <- mapM structField $ xs
   guard $ not $ null fields
-  return $ XEvent name number fields noseq
+  return $ XEvent name number alignment fields noseq
 
 xevcopy :: Element -> Parse XDecl
 xevcopy el = do
@@ -222,12 +235,12 @@ xevcopy el = do
   -- do we have a qualified ref?
   let (mname,evname) = splitRef ref
   details <- lookupEvent mname evname
-  return $ let EventDetails _ _ fields noseq =
+  return $ let EventDetails _ _ alignment fields noseq =
                  case details of
                    Nothing ->
                        error $ "Unresolved event: " ++ show mname ++ " " ++ ref
                    Just x -> x  
-           in XEvent name number fields noseq
+           in XEvent name number alignment fields noseq
 
 -- we need to do string processing to distinguish qualified from
 -- unqualified types.
@@ -258,8 +271,9 @@ xerror :: Element -> Parse XDecl
 xerror el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
-  fields <- mapM structField $ elChildren el
-  return $ XError name number fields
+  (alignment, xs) <- extractAlignment $ elChildren el
+  fields <- mapM structField $ xs
+  return $ XError name number alignment fields
 
 
 xercopy :: Element -> Parse XDecl
@@ -269,23 +283,25 @@ xercopy el = do
   ref <- el `attr` "ref"
   let (mname, ername) = splitRef ref
   details <- lookupError mname ername
-  return $ XError name number $ case details of
+  return $ uncurry (XError name number) $ case details of
                Nothing -> error $ "Unresolved error: " ++ show mname ++ " " ++ ref
-               Just (ErrorDetails _ _ x) -> x
+               Just (ErrorDetails _ _ alignment elems) -> (alignment, elems)
 
 xstruct :: Element -> Parse XDecl
 xstruct el = do
   name <- el `attr` "name"
-  fields <- mapAlt structField $ elChildren el
+  (alignment, xs) <- extractAlignment $ elChildren el
+  fields <- mapAlt structField $ xs
   guard $ not $ null fields
-  return $ XStruct name fields
+  return $ XStruct name alignment fields
 
 xunion :: Element -> Parse XDecl
 xunion el = do
   name <- el `attr` "name"
-  fields <- mapAlt structField $ elChildren el
+  (alignment, xs) <- extractAlignment $ elChildren el
+  fields <- mapAlt structField $ xs
   guard $ not $ null fields
-  return $ XUnion name fields
+  return $ XUnion name alignment fields
 
 xidtype :: Element -> Parse XDecl
 xidtype el = liftM XidType $ el `attr` "name"
@@ -340,8 +356,9 @@ structField el
         nm <- el `attr` "name"
         (exprEl,caseEls) <- unconsChildren el
         expr <- expression exprEl
-        cases <- mapM bitCase caseEls
-        return $ Switch nm expr cases
+        (alignment, xs) <- extractAlignment $ caseEls
+        cases <- mapM bitCase xs
+        return $ Switch nm expr alignment cases
 
     | el `named` "exprfield" = do
         typ <- liftM mkType $ el `attr` "type"
@@ -371,15 +388,16 @@ structField el
  ++ show name
 
 bitCase :: (MonadPlus m, Functor m) => Element -> m BitCase
-bitCase el | el `named` "bitcase" = do
-               let mName = el `attr` "name"
-               (exprEl, fieldEls) <- unconsChildren el
-               expr <- expression exprEl
-               fields <- mapM structField fieldEls
-               return $ BitCase mName expr fields
+bitCase el | el `named` "bitcase" || el `named` "case" = do
+              let mName = el `attr` "name"
+              (exprEl, fieldEls) <- unconsChildren el
+              expr <- expression exprEl
+              (alignment, xs) <- extractAlignment $ fieldEls
+              fields <- mapM structField xs
+              return $ BitCase mName expr alignment fields
            | otherwise =
-               let name = elName el
-               in error $ "Invalid bitCase: " ++ show name
+              let name = elName el
+              in error $ "Invalid bitCase: " ++ show name
 
 expression :: (MonadPlus m, Functor m) => Element -> m XExpression
 expression el | el `named` "fieldref"

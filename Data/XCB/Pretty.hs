@@ -104,9 +104,9 @@ instance Pretty a => Pretty (GenStructElem a) where
     toDoc (ExprField nm typ expr)
         = parens (text nm <+> text "::" <+> toDoc typ)
           <+> toDoc expr
-    toDoc (Switch name expr cases)
+    toDoc (Switch name expr alignment cases)
         = vcat
-           [ text "switch" <> parens (toDoc expr) <> brackets (text name)
+           [ text "switch" <> parens (toDoc expr) <> toDoc alignment <> brackets (text name)
            , braces (vcat (map toDoc cases))
            ]
     toDoc (Doc brief fields see)
@@ -144,10 +144,12 @@ instance Pretty a => Pretty (GenStructElem a) where
                       ,text lname
                       ]
 
+
 instance Pretty a => Pretty (GenBitCase a) where
-    toDoc (BitCase name expr fields)
+    toDoc (BitCase name expr alignment fields)
         = vcat
            [ bitCaseHeader name expr
+           , toDoc alignment
            , braces (vcat (map toDoc fields))
            ]
 
@@ -157,28 +159,33 @@ bitCaseHeader Nothing expr =
 bitCaseHeader (Just name) expr =
     text "bitcase" <> parens (toDoc expr) <> brackets (text name)
 
+instance Pretty Alignment where
+    toDoc (Alignment align offset) = text "alignment" <+>
+                                       text "align=" <+> toDoc align <+>
+                                       text "offset=" <+> toDoc offset
+
 instance Pretty a => Pretty (GenXDecl a) where
-    toDoc (XStruct nm elems) =
-        hang (text "Struct:" <+> text nm) 2 $ vcat $ map toDoc elems
+    toDoc (XStruct nm alignment elems) =
+        hang (text "Struct:" <+> text nm <+> toDoc alignment) 2 $ vcat $ map toDoc elems
     toDoc (XTypeDef nm typ) = hsep [text "TypeDef:"
                                     ,text nm
                                     ,text "as"
                                     ,toDoc typ
                                     ]
-    toDoc (XEvent nm n elems (Just True)) =
-        hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+>
+    toDoc (XEvent nm n alignment elems (Just True)) =
+        hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+> toDoc alignment <+>
              parens (text "No sequence number")) 2 $
              vcat $ map toDoc elems
-    toDoc (XEvent nm n elems _) =
-        hang (text "Event:" <+> text nm <> char ',' <> toDoc n) 2 $
+    toDoc (XEvent nm n alignment elems _) =
+        hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+> toDoc alignment) 2 $
              vcat $ map toDoc elems
-    toDoc (XRequest nm n elems mrep) = 
-        (hang (text "Request:" <+> text nm <> char ',' <> toDoc n) 2 $
+    toDoc (XRequest nm n alignment elems mrep) = 
+        (hang (text "Request:" <+> text nm <> char ',' <> toDoc n <+> toDoc alignment) 2 $
              vcat $ map toDoc elems)
          $$ case mrep of
              Nothing -> empty
-             Just reply ->
-                 hang (text "Reply:" <+> text nm <> char ',' <> toDoc n) 2 $
+             Just (GenXReply repAlignment reply) ->
+                 hang (text "Reply:" <+> text nm <> char ',' <> toDoc n <+> toDoc repAlignment) 2 $
                       vcat $ map toDoc reply
     toDoc (XidType nm) = text "XID:" <+> text nm
     toDoc (XidUnion nm elems) = 
@@ -186,11 +193,11 @@ instance Pretty a => Pretty (GenXDecl a) where
              vcat $ map toDoc elems
     toDoc (XEnum nm elems) =
         hang (text "Enum:" <+> text nm) 2 $ vcat $ map toDoc elems
-    toDoc (XUnion nm elems) = 
-        hang (text "Union:" <+> text nm) 2 $ vcat $ map toDoc elems
+    toDoc (XUnion nm alignment elems) = 
+        hang (text "Union:" <+> text nm <+> toDoc alignment) 2 $ vcat $ map toDoc elems
     toDoc (XImport nm) = text "Import:" <+> text nm
-    toDoc (XError nm _n elems) =
-        hang (text "Error:" <+> text nm) 2 $ vcat $ map toDoc elems
+    toDoc (XError nm _n alignment elems) =
+        hang (text "Error:" <+> text nm <+> toDoc alignment) 2 $ vcat $ map toDoc elems
 
 instance Pretty a => Pretty (GenXHeader a) where
     toDoc xhd = text (xheader_header xhd) $$

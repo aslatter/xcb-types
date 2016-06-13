@@ -30,7 +30,7 @@ module Data.XCB.Types
     , GenXDecl ( .. )
     , GenStructElem ( .. )
     , GenBitCase ( .. )
-    , GenXReply
+    , GenXReply ( .. )
     , GenXidUnionElem ( .. )
     , EnumElem ( .. )
     , Expression ( .. )
@@ -44,6 +44,7 @@ module Data.XCB.Types
     , MaskName
     , ListName
     , MaskPadding
+    , Alignment ( .. )
     ) where
 
 import Data.Map
@@ -78,16 +79,16 @@ type XEnumElem = EnumElem Type
 -- |The different types of declarations which can be made in one of the
 -- XML files.
 data GenXDecl typ
-    = XStruct  Name [GenStructElem typ]
+    = XStruct  Name (Maybe Alignment) [GenStructElem typ]
     | XTypeDef Name typ
-    | XEvent Name Int [GenStructElem typ] (Maybe Bool)  -- ^ The boolean indicates if the event includes a sequence number.
-    | XRequest Name Int [GenStructElem typ] (Maybe (GenXReply typ))
+    | XEvent Name Int (Maybe Alignment) [GenStructElem typ] (Maybe Bool)  -- ^ The boolean indicates if the event includes a sequence number.
+    | XRequest Name Int (Maybe Alignment) [GenStructElem typ] (Maybe (GenXReply typ))
     | XidType  Name
     | XidUnion  Name [GenXidUnionElem typ]
     | XEnum Name [EnumElem typ]
-    | XUnion Name [GenStructElem typ]
+    | XUnion Name (Maybe Alignment) [GenStructElem typ]
     | XImport Name
-    | XError Name Int [GenStructElem typ]
+    | XError Name Int (Maybe Alignment) [GenStructElem typ]
  deriving (Show, Functor)
 
 data GenStructElem typ
@@ -96,20 +97,21 @@ data GenStructElem typ
     | SField Name typ (Maybe (EnumVals typ)) (Maybe (MaskVals typ))
     | ExprField Name typ (Expression typ)
     | ValueParam typ Name (Maybe MaskPadding) ListName
-    | Switch Name (Expression typ) [GenBitCase typ]
+    | Switch Name (Expression typ) (Maybe Alignment) [GenBitCase typ]
     | Doc (Maybe String) (Map Name String) [(String, String)]
     | Fd String
  deriving (Show, Functor)
 
 data GenBitCase typ
-    = BitCase (Maybe Name) (Expression typ) [GenStructElem typ]
+    = BitCase (Maybe Name) (Expression typ) (Maybe Alignment) [GenStructElem typ]
  deriving (Show, Functor)
 
 type EnumVals typ = typ
 type MaskVals typ = typ
 
 type Name = String
-type GenXReply typ = [GenStructElem typ]
+data GenXReply typ = GenXReply (Maybe Alignment) [GenStructElem typ]
+ deriving (Show, Functor)
 type Ref = String
 type MaskName = Name
 type ListName = Name
@@ -150,3 +152,5 @@ data Binop = Add
 
 data Unop = Complement
  deriving (Show)
+
+data Alignment = Alignment Int Int deriving (Show)
