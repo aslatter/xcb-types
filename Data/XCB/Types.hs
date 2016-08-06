@@ -139,6 +139,7 @@ data Expression typ
     | SumOf Name -- ^Note sure. The argument should be a reference to a list
     | Op Binop (Expression typ) (Expression typ) -- ^A binary opeation
     | Unop Unop (Expression typ) -- ^A unary operation
+    | ParamRef Name -- ^I think this is the name of an argument passed to the request. See fffbd04d63 in xcb-proto.
  deriving (Show, Functor)
 
 -- |Supported Binary operations.

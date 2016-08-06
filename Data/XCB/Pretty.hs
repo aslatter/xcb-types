@@ -90,6 +90,7 @@ instance Pretty a => Pretty (Expression a) where
                         ]
     toDoc (Unop op expr)
         = parens $ toDoc op <> toDoc expr
+    toDoc (ParamRef n) = toDoc n
 
 instance Pretty a => Pretty (GenStructElem a) where
     toDoc (Pad n) = braces $ toDoc n <+> text "bytes"

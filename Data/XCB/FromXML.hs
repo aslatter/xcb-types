@@ -428,6 +428,8 @@ expression el | el `named` "fieldref"
               | el `named` "sumof" = do
                     ref <- el `attr` "ref"
                     return $ SumOf ref
+              | el `named` "paramref"
+                    =  return $ ParamRef $ strContent el
               | otherwise =
                   let nm = elName el
                   in error $ "Unknown epression " ++ show nm ++ " in Data.XCB.FromXML.expression"
