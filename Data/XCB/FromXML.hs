@@ -78,7 +78,7 @@ allModules = fst `liftM` ask
 extractAlignment :: (MonadPlus m, Functor m) => [Element] -> m (Maybe Alignment, [Element])
 extractAlignment (el : xs) | el `named` "required_start_align" = do
                                align <- el `attr` "align" >>= readM
-                               offset <- el `attr` "offset" >>= readM
+                               let offset = el `attr` "offset" >>= readM
                                return (Just (Alignment align offset), xs)
                            | otherwise = return (Nothing, el : xs)
 extractAlignment xs = return (Nothing, xs)
