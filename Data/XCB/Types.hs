@@ -154,4 +154,4 @@ data Binop = Add
 data Unop = Complement
  deriving (Show)
 
-data Alignment = Alignment Int Int deriving (Show)
+data Alignment = Alignment Int (Maybe Int) deriving (Show)
