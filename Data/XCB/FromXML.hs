@@ -178,6 +178,7 @@ declFromElem el
     | el `named` "typedef" = xtypedef el
     | el `named` "enum" = xenum el
     | el `named` "import" = ximport el
+    | el `named` "eventstruct" = xeventstruct el
     | otherwise = mzero
 
 
@@ -324,6 +325,19 @@ xtypedef el = do
   newname <- el `attr` "newname"
   return $ XTypeDef newname oldtyp
 
+xeventstruct :: Element -> Parse XDecl
+xeventstruct el = do
+  name <- el `attr` "name"
+  allowed <- mapAlt allowedEvent $ elChildren el
+  return $ XEventStruct name allowed
+
+allowedEvent :: (MonadPlus m, Functor m) => Element -> m AllowedEvent
+allowedEvent el = do
+  extension <- el `attr` "name"
+  xge <- el `attr` "xge" >>= readM
+  opMin <- el `attr` "opcode-min" >>= readM
+  opMax <- el `attr` "opcode-max" >>= readM
+  return $ AllowedEvent extension xge opMin opMax
 
 structField :: (MonadPlus m, Functor m) => Element -> m StructElem
 structField el

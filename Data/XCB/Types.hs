@@ -45,6 +45,7 @@ module Data.XCB.Types
     , ListName
     , MaskPadding
     , Alignment ( .. )
+    , AllowedEvent ( .. )
     ) where
 
 import Data.Map
@@ -89,6 +90,7 @@ data GenXDecl typ
     | XUnion Name (Maybe Alignment) [GenStructElem typ]
     | XImport Name
     | XError Name Int (Maybe Alignment) [GenStructElem typ]
+    | XEventStruct Name [AllowedEvent]
  deriving (Show, Functor)
 
 data GenStructElem typ
@@ -155,3 +157,5 @@ data Unop = Complement
  deriving (Show)
 
 data Alignment = Alignment Int Int deriving (Show)
+
+data AllowedEvent = AllowedEvent Name Bool Int Int deriving (Show)

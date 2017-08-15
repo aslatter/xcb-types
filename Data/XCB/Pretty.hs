@@ -39,6 +39,9 @@ instance Pretty String where
 instance Pretty Int where
     pretty = show
 
+instance Pretty Bool where
+    pretty = show
+
 instance Pretty a => Pretty (Maybe a) where
     toDoc Nothing = empty
     toDoc (Just a) = toDoc a
@@ -165,6 +168,13 @@ instance Pretty Alignment where
                                        text "align=" <+> toDoc align <+>
                                        text "offset=" <+> toDoc offset
 
+instance Pretty AllowedEvent where
+    toDoc (AllowedEvent extension xge opMin opMax) = text "allowed" <+>
+                                                       text "extension=" <+> text extension <+>
+                                                       text "xge=" <> toDoc xge <>
+                                                       text "opcode-min" <> toDoc opMin <>
+                                                       text "opcode-max" <> toDoc opMax
+
 instance Pretty a => Pretty (GenXDecl a) where
     toDoc (XStruct nm alignment elems) =
         hang (text "Struct:" <+> text nm <+> toDoc alignment) 2 $ vcat $ map toDoc elems
@@ -199,6 +209,8 @@ instance Pretty a => Pretty (GenXDecl a) where
     toDoc (XImport nm) = text "Import:" <+> text nm
     toDoc (XError nm _n alignment elems) =
         hang (text "Error:" <+> text nm <+> toDoc alignment) 2 $ vcat $ map toDoc elems
+    toDoc (XEventStruct name allowed) =
+        hang (text "Event struct:" <+> text name) 2 $ vcat $ map toDoc allowed
 
 instance Pretty a => Pretty (GenXHeader a) where
     toDoc xhd = text (xheader_header xhd) $$
