@@ -1,3 +1,6 @@
+Version 0.9.0
+  * Add support for structures needed to parse xcb-proto 1.13
+
 Version 0.8.0
   * Add support for structures needed to parse xcb-proto 1.12
 
