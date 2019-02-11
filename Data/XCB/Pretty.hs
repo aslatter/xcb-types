@@ -14,6 +14,8 @@
 -- intended to aid in debugging.
 module Data.XCB.Pretty where
 
+import Prelude hiding ((<>))
+
 import Data.XCB.Types
 
 import Text.PrettyPrint.HughesPJ
