@@ -1,4 +1,7 @@
 dist
+# I think we can drop this with cabal >= 2.6
+dist-newstyle
+.ghc.environment.*
 *~
 /.cabal-sandbox/
 /cabal.sandbox.config
