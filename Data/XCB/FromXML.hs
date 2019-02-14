@@ -30,6 +30,7 @@ import Data.Maybe
 
 import Control.Applicative ((<$>))
 import Control.Monad
+import Control.Monad.Fail (MonadFail)
 import Control.Monad.Reader
 
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
@@ -339,7 +340,7 @@ allowedEvent el = do
   opMax <- el `attr` "opcode-max" >>= readM
   return $ AllowedEvent extension xge opMin opMax
 
-structField :: (MonadPlus m, Functor m) => Element -> m StructElem
+structField :: (MonadFail m, MonadPlus m, Functor m) => Element -> m StructElem
 structField el
     | el `named` "field" = do
         typ <- liftM mkType $ el `attr` "type"
@@ -401,7 +402,7 @@ structField el
                   in error $ "I don't know what to do with structelem "
  ++ show name
 
-bitCase :: (MonadPlus m, Functor m) => Element -> m BitCase
+bitCase :: (MonadFail m, MonadPlus m, Functor m) => Element -> m BitCase
 bitCase el | el `named` "bitcase" || el `named` "case" = do
               let mName = el `attr` "name"
               (exprEl, fieldEls) <- unconsChildren el
@@ -413,7 +414,7 @@ bitCase el | el `named` "bitcase" || el `named` "case" = do
               let name = elName el
               in error $ "Invalid bitCase: " ++ show name
 
-expression :: (MonadPlus m, Functor m) => Element -> m XExpression
+expression :: (MonadFail m, MonadPlus m, Functor m) => Element -> m XExpression
 expression el | el `named` "fieldref"
                     = return $ FieldRef $ strContent el
               | el `named` "enumref" = do
