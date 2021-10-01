@@ -28,9 +28,7 @@ import Data.List as List
 import qualified Data.Map as Map
 import Data.Maybe
 
-import Control.Applicative ((<$>))
 import Control.Monad
-import Control.Monad.Fail (MonadFail)
 import Control.Monad.Reader
 
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
