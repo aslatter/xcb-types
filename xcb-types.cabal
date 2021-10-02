@@ -41,5 +41,6 @@ Library
                   Data.XCB.FromXML
 
  Other-modules:   Data.XCB.Utils
+ Default-Language: Haskell2010
 
  Ghc-Options:     -Wall
