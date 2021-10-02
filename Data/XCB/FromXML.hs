@@ -396,6 +396,11 @@ structField el
         name <- el `attr` "name"
         return $ Fd name
 
+    | el `named` "length" = do
+        expr <- firstChild el >>= expression
+        let typ = mkType "CARD32"
+        return $ Length typ expr
+
     | otherwise = let name = elName el
                   in error $ "I don't know what to do with structelem "
  ++ show name
