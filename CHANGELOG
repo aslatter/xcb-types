@@ -1,3 +1,6 @@
+Version 0.11.0
+  * Add support for length element in unreleased xcb-proto
+
 Version 0.10.0
   * Update for GHC >= 8.6
 
