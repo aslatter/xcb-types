@@ -82,7 +82,7 @@ type XEnumElem = EnumElem Type
 data GenXDecl typ
     = XStruct  Name (Maybe Alignment) [GenStructElem typ]
     | XTypeDef Name typ
-    | XEvent Name Int (Maybe Alignment) [GenStructElem typ] (Maybe Bool)  -- ^ The boolean indicates if the event includes a sequence number.
+    | XEvent Name Int (Maybe Alignment) (Maybe Bool) [GenStructElem typ] (Maybe Bool)  -- ^ bools: #1 if xge is true; #2  if the event includes a sequence number.
     | XRequest Name Int (Maybe Alignment) [GenStructElem typ] (Maybe (GenXReply typ))
     | XidType  Name
     | XidUnion  Name [GenXidUnionElem typ]
