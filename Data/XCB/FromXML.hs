@@ -127,13 +127,13 @@ findEvent :: Name -> [XDecl] -> Maybe EventDetails
 findEvent pname xs =
       case List.find f xs of
         Nothing -> Nothing
-        Just (XEvent name code alignment elems noseq) ->
-            Just $ EventDetails name code alignment elems noseq
+        Just (XEvent name code alignment xge elems noseq) ->
+            Just $ EventDetails name code alignment xge elems noseq
         _ -> error "impossible: fatal error in Data.XCB.FromXML.findEvent"
-   where f (XEvent name _ _ _ _) | name == pname = True
-         f _ = False
+   where f (XEvent name _ _ _ _ _) | name == pname = True
+         f _ = False 
 
-data EventDetails = EventDetails Name Int (Maybe Alignment) [StructElem] (Maybe Bool)
+data EventDetails = EventDetails Name Int (Maybe Alignment) (Maybe Bool) [StructElem] (Maybe Bool)
 data ErrorDetails = ErrorDetails Name Int (Maybe Alignment) [StructElem]
 
 ---
@@ -222,11 +222,12 @@ xevent :: Element -> Parse XDecl
 xevent el = do
   name <- el `attr` "name"
   number <- el `attr` "number" >>= readM
+  let xge = ensureUpper `liftM` (el `attr` "xge") >>= readM
   let noseq = ensureUpper `liftM` (el `attr` "no-sequence-number") >>= readM
   (alignment, xs) <- extractAlignment (elChildren el)
   fields <- mapM structField $ xs
   guard $ not $ null fields
-  return $ XEvent name number alignment fields noseq
+  return $ XEvent name number alignment xge fields noseq
 
 xevcopy :: Element -> Parse XDecl
 xevcopy el = do
@@ -236,12 +237,12 @@ xevcopy el = do
   -- do we have a qualified ref?
   let (mname,evname) = splitRef ref
   details <- lookupEvent mname evname
-  return $ let EventDetails _ _ alignment fields noseq =
+  return $ let EventDetails _ _ alignment xge fields noseq =
                  case details of
                    Nothing ->
                        error $ "Unresolved event: " ++ show mname ++ " " ++ ref
-                   Just x -> x
-           in XEvent name number alignment fields noseq
+                   Just x -> x  
+           in XEvent name number alignment xge fields noseq
 
 -- we need to do string processing to distinguish qualified from
 -- unqualified types.
