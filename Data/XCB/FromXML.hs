@@ -26,10 +26,11 @@ import Text.XML.Light
 
 import Data.List as List
 import qualified Data.Map as Map
-import Data.Maybe
+import Data.Maybe (catMaybes, mapMaybe)
 
-import Control.Monad
-import Control.Monad.Reader
+import Control.Monad (MonadPlus (mzero, mplus), guard, liftM, liftM2)
+import Control.Monad.Fail (MonadFail)
+import Control.Monad.Reader (ReaderT, runReaderT, ask, lift, withReaderT)
 
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
 
@@ -58,7 +59,7 @@ fromStrings :: [String] -> [XHeader]
 fromStrings xs =
    let rs = mapAlt fromString xs
        Just headers = runReaderT rs headers
-   in headers 
+   in headers
 
 -- The 'Parse' monad.  Provides the name of the
 -- current module, and a list of all of the modules.
@@ -120,17 +121,17 @@ findError pname xs =
         Just (XError name code alignment elems) -> Just $ ErrorDetails name code alignment elems
         _ -> error "impossible: fatal error in Data.XCB.FromXML.findError"
     where  f (XError name _ _ _) | name == pname = True
-           f _ = False 
-                                       
+           f _ = False
+
 findEvent :: Name -> [XDecl] -> Maybe EventDetails
-findEvent pname xs = 
+findEvent pname xs =
       case List.find f xs of
         Nothing -> Nothing
         Just (XEvent name code alignment elems noseq) ->
             Just $ EventDetails name code alignment elems noseq
         _ -> error "impossible: fatal error in Data.XCB.FromXML.findEvent"
    where f (XEvent name _ _ _ _) | name == pname = True
-         f _ = False 
+         f _ = False
 
 data EventDetails = EventDetails Name Int (Maybe Alignment) [StructElem] (Maybe Bool)
 data ErrorDetails = ErrorDetails Name Int (Maybe Alignment) [StructElem]
@@ -239,7 +240,7 @@ xevcopy el = do
                  case details of
                    Nothing ->
                        error $ "Unresolved event: " ++ show mname ++ " " ++ ref
-                   Just x -> x  
+                   Just x -> x
            in XEvent name number alignment fields noseq
 
 -- we need to do string processing to distinguish qualified from
@@ -262,10 +263,10 @@ split :: Char -> String -> (String, String)
 split c = go
     where go [] = ([],[])
           go (x:xs) | x == c = ([],xs)
-                    | otherwise = 
+                    | otherwise =
                         let (lefts, rights) = go xs
                         in (x:lefts,rights)
-                 
+
 
 xerror :: Element -> Parse XDecl
 xerror el = do
@@ -508,4 +509,3 @@ children :: MonadPlus m => Element -> String -> m [Element]
 -- adapted from Network.CGI.Protocol
 readM :: (MonadPlus m, Read a) => String -> m a
 readM = liftM fst . listToM . reads
-
