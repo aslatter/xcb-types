@@ -187,11 +187,11 @@ instance Pretty a => Pretty (GenXDecl a) where
                                     ,text "as"
                                     ,toDoc typ
                                     ]
-    toDoc (XEvent nm n alignment xge elems (Just True)) =
+    toDoc (XEvent nm n alignment _ elems (Just True)) =
         hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+> toDoc alignment <+>
              parens (text "No sequence number")) 2 $
              vcat $ map toDoc elems
-    toDoc (XEvent nm n alignment xge elems _) =
+    toDoc (XEvent nm n alignment _ elems _) =
         hang (text "Event:" <+> text nm <> char ',' <> toDoc n <+> toDoc alignment) 2 $
              vcat $ map toDoc elems
     toDoc (XRequest nm n alignment elems mrep) = 
