@@ -29,7 +29,6 @@ import qualified Data.Map as Map
 import Data.Maybe (catMaybes, mapMaybe)
 
 import Control.Monad (MonadPlus (mzero, mplus), guard, liftM, liftM2)
-import Control.Monad.Fail (MonadFail)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift, withReaderT)
 
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
