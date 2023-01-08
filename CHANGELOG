@@ -1,3 +1,6 @@
+Version 0.12.0
+  * Add support for XGE
+
 Version 0.11.0
   * Add support for length element in unreleased xcb-proto
 
