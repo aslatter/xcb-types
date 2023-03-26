@@ -26,7 +26,7 @@ import Text.XML.Light
 
 import Data.List as List
 import qualified Data.Map as Map
-import Data.Maybe (catMaybes, mapMaybe)
+import Data.Maybe (catMaybes, mapMaybe, maybeToList)
 
 import Control.Monad (MonadPlus (mzero, mplus), guard, liftM, liftM2)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift, withReaderT)
@@ -57,7 +57,7 @@ readFileUTF8 fp = do
 fromStrings :: [String] -> [XHeader]
 fromStrings xs =
    let rs = mapAlt fromString xs
-       Just headers = runReaderT rs headers
+       headers = concat $ maybeToList $ runReaderT rs headers
    in headers
 
 -- The 'Parse' monad.  Provides the name of the
