@@ -1,3 +1,7 @@
+Version 0.13.0
+  * fix Struct/Reply parsing for things with fields that use align style
+    padding
+
 Version 0.12.0
   * Add support for XGE
 
