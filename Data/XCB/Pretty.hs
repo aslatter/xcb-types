@@ -97,8 +97,12 @@ instance Pretty a => Pretty (Expression a) where
         = parens $ toDoc op <> toDoc expr
     toDoc (ParamRef n) = toDoc n
 
+instance Pretty PadType where
+    pretty PadBytes = "bytes"
+    pretty PadAlignment = "align"
+
 instance Pretty a => Pretty (GenStructElem a) where
-    toDoc (Pad n) = braces $ toDoc n <+> text "bytes"
+    toDoc (Pad typ n) = braces $ toDoc n <+> toDoc typ
     toDoc (List nm typ len enums)
         = text nm <+> text "::" <+> brackets (toDoc typ <+> toDoc enums) <+> toDoc len
     toDoc (SField nm typ enums mask) = hsep [text nm

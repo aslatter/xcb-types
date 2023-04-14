@@ -46,6 +46,7 @@ module Data.XCB.Types
     , MaskPadding
     , Alignment ( .. )
     , AllowedEvent ( .. )
+    , PadType ( .. )
     ) where
 
 import Data.Map
@@ -93,8 +94,13 @@ data GenXDecl typ
     | XEventStruct Name [AllowedEvent]
  deriving (Show, Functor)
 
+data PadType
+    = PadBytes
+    | PadAlignment
+ deriving (Show)
+
 data GenStructElem typ
-    = Pad Int
+    = Pad PadType Int
     | List Name typ (Maybe (Expression typ)) (Maybe (EnumVals typ))
     | SField Name typ (Maybe (EnumVals typ)) (Maybe (MaskVals typ))
     | ExprField Name typ (Expression typ)
