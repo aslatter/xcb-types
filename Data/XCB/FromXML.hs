@@ -349,8 +349,10 @@ structField el
         return $ SField name typ enum mask
 
     | el `named` "pad" = do
-        bytes <- el `attr` "bytes" >>= readM
-        return $ Pad bytes
+        let bytes = liftM (Pad PadBytes) $ el `attr` "bytes" >>= readM
+        let align = liftM (Pad PadAlignment) $ el `attr` "align" >>= readM
+
+        return $ head $ catMaybes $ [bytes, align]
 
     | el `named` "list" = do
         typ <- liftM mkType $ el `attr` "type"
