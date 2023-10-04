@@ -30,6 +30,7 @@ import Data.Maybe (catMaybes, mapMaybe, maybeToList)
 
 import Control.Monad (MonadPlus (mzero, mplus), guard, liftM, liftM2)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift, withReaderT)
+import Control.Monad.Fail (MonadFail)
 
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
 
