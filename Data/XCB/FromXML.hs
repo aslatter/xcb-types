@@ -15,6 +15,7 @@
 --
 -- There is no provision for preserving the event copy and error copy
 -- declarations - the copies are handled during parsing.
+{-# LANGUAGE CPP #-}
 module Data.XCB.FromXML(fromFiles
                        ,fromStrings
                        ) where
@@ -30,8 +31,9 @@ import Data.Maybe (catMaybes, mapMaybe, maybeToList)
 
 import Control.Monad (MonadPlus (mzero, mplus), guard, liftM, liftM2)
 import Control.Monad.Reader (ReaderT, runReaderT, ask, lift, withReaderT)
+#if __GLASGOW_HASKELL__ < 900
 import Control.Monad.Fail (MonadFail)
-
+#endif
 import System.IO (openFile, IOMode (ReadMode), hSetEncoding, utf8, hGetContents)
 
 -- |Process the listed XML files.
