@@ -1,3 +1,7 @@
+Version 0.14.0
+  * relax mtl constraints for newer ghcs
+  * import MonadFail only on older ghcs
+
 Version 0.13.0
   * fix Struct/Reply parsing for things with fields that use align style
     padding
