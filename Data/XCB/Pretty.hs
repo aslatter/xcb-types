@@ -158,18 +158,18 @@ instance Pretty a => Pretty (GenStructElem a) where
 
 
 instance Pretty a => Pretty (GenBitCase a) where
-    toDoc (BitCase name expr alignment fields)
+    toDoc (BitCase name exprs alignment fields)
         = vcat
-           [ bitCaseHeader name expr
+           [ bitCaseHeader name exprs
            , toDoc alignment
            , braces (vcat (map toDoc fields))
            ]
 
-bitCaseHeader :: Pretty a => Maybe Name -> Expression a -> Doc
-bitCaseHeader Nothing expr =
-    text "bitcase" <> parens (toDoc expr)
-bitCaseHeader (Just name) expr =
-    text "bitcase" <> parens (toDoc expr) <> brackets (text name)
+bitCaseHeader :: Pretty a => Maybe Name -> [Expression a] -> Doc
+bitCaseHeader Nothing exprs =
+    text "bitcase" <> parens (hcat (map toDoc exprs))
+bitCaseHeader (Just name) exprs =
+    text "bitcase" <> parens (hcat (map toDoc exprs)) <> brackets (text name)
 
 instance Pretty Alignment where
     toDoc (Alignment align offset) = text "alignment" <+>
