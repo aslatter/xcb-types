@@ -414,11 +414,11 @@ structField el
 bitCase :: (MonadFail m, MonadPlus m, Functor m) => Element -> m BitCase
 bitCase el | el `named` "bitcase" || el `named` "case" = do
               let mName = el `attr` "name"
-              (exprEl, fieldEls) <- unconsChildren el
-              expr <- expression exprEl
+              let (exprEls, fieldEls) = takeEnumrefs $ elChildren el
+              exprs <- mapM expression exprEls
               (alignment, xs) <- extractAlignment $ fieldEls
               fields <- mapM structField xs
-              return $ BitCase mName expr alignment fields
+              return $ BitCase mName exprs alignment fields
            | otherwise =
               let name = elName el
               in error $ "Invalid bitCase: " ++ show name
@@ -488,6 +488,12 @@ unconsChildren el
     = case elChildren el of
         (x:xs) -> return (x,xs)
         _ -> mzero
+
+takeEnumrefs :: [Element] -> ([Element], [Element])
+takeEnumrefs [] = ([], [])
+takeEnumrefs (x:xs) =
+    let (ys, zs) = takeEnumrefs xs
+    in if x `named` "enumref" then (x:ys, zs) else (ys, x:zs)
 
 listToM :: MonadPlus m => [a] -> m a
 listToM [] = mzero

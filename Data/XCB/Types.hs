@@ -112,7 +112,10 @@ data GenStructElem typ
  deriving (Show, Functor)
 
 data GenBitCase typ
-    = BitCase (Maybe Name) (Expression typ) (Maybe Alignment) [GenStructElem typ]
+    -- All requests with the exception of GetKbdByName seem to have exactly 1
+    -- expression value, but GetKbdByNameReply has multiple, see xcbproto
+    -- commit b3b5e029e7ad ("XKB: Fix GetKbdByName") for details.
+    = BitCase (Maybe Name) [Expression typ] (Maybe Alignment) [GenStructElem typ]
  deriving (Show, Functor)
 
 type EnumVals typ = typ
